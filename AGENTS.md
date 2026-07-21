@@ -1,4 +1,4 @@
-# vscode-skel Agent Guidelines
+# Skel Editor Support Agent Guidelines
 
 ## Project Scope
 

@@ -1,8 +1,8 @@
 # Skel VS Code Support
 
-[![CI](https://github.com/yorun-ai/vscode-skel/actions/workflows/ci.yml/badge.svg)](https://github.com/yorun-ai/vscode-skel/actions/workflows/ci.yml)
-[![License](https://img.shields.io/github/license/yorun-ai/vscode-skel)](LICENSE)
-[![Version](https://img.shields.io/github/v/release/yorun-ai/vscode-skel?label=version&cacheSeconds=300)](https://github.com/yorun-ai/vscode-skel/releases/latest)
+[![CI](https://github.com/yorun-ai/skel-editor-support/actions/workflows/ci.yml/badge.svg)](https://github.com/yorun-ai/skel-editor-support/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/yorun-ai/skel-editor-support)](LICENSE)
+[![Version](https://img.shields.io/github/v/release/yorun-ai/skel-editor-support?label=version&cacheSeconds=300)](https://github.com/yorun-ai/skel-editor-support/releases/latest)
 
 The official VS Code extension for the [Skel](https://yorun.ai/skelc/syntax) contract language.
 

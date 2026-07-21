@@ -8,11 +8,11 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yorun-ai/vscode-skel.git"
+    "url": "https://github.com/yorun-ai/skel-editor-support.git"
   },
-  "homepage": "https://github.com/yorun-ai/vscode-skel#readme",
+  "homepage": "https://github.com/yorun-ai/skel-editor-support#readme",
   "bugs": {
-    "url": "https://github.com/yorun-ai/vscode-skel/issues"
+    "url": "https://github.com/yorun-ai/skel-editor-support/issues"
   },
   "engines": {
     "vscode": "^1.85.0"
