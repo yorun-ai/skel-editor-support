@@ -1,13 +1,17 @@
 # OS and editor state
 .DS_Store
 .idea/
-.vscode/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
 
 # Dependencies and build output
 node_modules/
 out/
 dist/
 *.vsix
+.test/
+.vscode-test/
 
 # Logs
 npm-debug.log*

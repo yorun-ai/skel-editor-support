@@ -2,7 +2,8 @@
   "name": "vscode-skel",
   "displayName": "Skel",
   "description": "Syntax highlighting and language-server support for .skel files.",
-  "version": "0.0.2",
+  "version": "0.9.0",
+  "icon": "assets/icon.png",
   "publisher": "yorun",
   "license": "Apache-2.0",
   "repository": {
@@ -19,6 +20,30 @@
   "categories": [
     "Programming Languages"
   ],
+  "keywords": [
+    "skel",
+    "contract",
+    "language server",
+    "rpc",
+    "vine"
+  ],
+  "galleryBanner": {
+    "color": "#242424",
+    "theme": "dark"
+  },
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Skel language features require a workspace filesystem and the skelc executable."
+    },
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "The extension starts the configured skelc executable."
+    }
+  },
   "main": "./out/extension.js",
   "activationEvents": [
     "onLanguage:skel"
@@ -51,26 +76,56 @@
         "path": "./themes/skel-dark-color-theme.json"
       }
     ],
+    "commands": [
+      {
+        "command": "skel.restartLanguageServer",
+        "title": "Restart Language Server",
+        "category": "Skel"
+      },
+      {
+        "command": "skel.showLanguageServerOutput",
+        "title": "Show Language Server Output",
+        "category": "Skel"
+      }
+    ],
     "configuration": {
       "title": "Skel",
       "properties": {
         "skelc.path": {
           "type": "string",
           "default": "skelc",
-          "description": "Path to the skelc executable used for the Skel language server."
+          "scope": "machine-overridable",
+          "description": "Path to the skelc executable used for the Skel language server. Changes restart the server automatically."
+        },
+        "skelc.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "scope": "window",
+          "description": "Trace communication between VS Code and the Skel language server."
         }
       }
     }
   },
   "scripts": {
-    "build": "esbuild ./src/extension.js --bundle --platform=node --external:vscode --outfile=./out/extension.js",
-    "check": "npm run build && node ./scripts/check.js",
+    "build": "esbuild ./src/extension.js --bundle --platform=node --external:vscode --sourcemap --outfile=./out/extension.js",
+    "check": "npm run build && npm run test:unit && node ./scripts/check.js",
+    "test:unit": "node --test ./test/unit/*.test.js",
+    "test:integration": "node --test ./test/lsp.integration.test.js",
+    "test:extension": "node ./test/run-extension-tests.js",
     "vscode:prepublish": "npm run build"
   },
   "dependencies": {
     "vscode-languageclient": "^10.1.0"
   },
   "devDependencies": {
-    "esbuild": "^0.28.1"
+    "@vscode/test-electron": "^3.0.0",
+    "esbuild": "^0.28.1",
+    "vscode-oniguruma": "^2.0.1",
+    "vscode-textmate": "^9.3.2"
   }
 }
