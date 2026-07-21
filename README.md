@@ -74,6 +74,12 @@ SKELC_PATH=/absolute/path/to/skelc npm run test:integration
 SKELC_PATH=/absolute/path/to/skelc npm run test:extension
 ```
 
+## Release
+
+Publishing a GitHub Release whose tag matches `v<package version>` automatically publishes the packaged extension to the VS Code Marketplace. For example, package version `0.9.0` must use tag `v0.9.0`.
+
+The repository must provide a `VSCE_PAT` secret to the `vscode-marketplace` GitHub environment. The token must belong to the `yorun` Marketplace publisher and have Marketplace management permission. The workflow only publishes tags whose commit is contained in `main`.
+
 ## License
 
 Skel VS Code Support is open source under the Apache License 2.0. See [LICENSE](LICENSE).
