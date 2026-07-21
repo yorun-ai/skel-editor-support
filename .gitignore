@@ -1,0 +1,14 @@
+# OS and editor state
+.DS_Store
+.idea/
+.vscode/
+
+# Dependencies and build output
+node_modules/
+out/
+dist/
+*.vsix
+
+# Logs
+npm-debug.log*
+*.log

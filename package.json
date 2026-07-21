@@ -1,0 +1,76 @@
+{
+  "name": "vscode-skel",
+  "displayName": "Skel",
+  "description": "Syntax highlighting and language-server support for .skel files.",
+  "version": "0.0.2",
+  "publisher": "yorun",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yorun-ai/vscode-skel.git"
+  },
+  "homepage": "https://github.com/yorun-ai/vscode-skel#readme",
+  "bugs": {
+    "url": "https://github.com/yorun-ai/vscode-skel/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:skel"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "skel",
+        "aliases": [
+          "Skel",
+          "skel"
+        ],
+        "extensions": [
+          ".skel"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "skel",
+        "scopeName": "source.skel",
+        "path": "./syntaxes/skel.tmLanguage.json"
+      }
+    ],
+    "themes": [
+      {
+        "label": "Skel Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/skel-dark-color-theme.json"
+      }
+    ],
+    "configuration": {
+      "title": "Skel",
+      "properties": {
+        "skelc.path": {
+          "type": "string",
+          "default": "skelc",
+          "description": "Path to the skelc executable used for the Skel language server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "esbuild ./src/extension.js --bundle --platform=node --external:vscode --outfile=./out/extension.js",
+    "check": "npm run build && node ./scripts/check.js",
+    "vscode:prepublish": "npm run build"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^10.1.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  }
+}

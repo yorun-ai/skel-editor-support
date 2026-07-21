@@ -1,0 +1,23 @@
+name: Feature request
+description: Propose an improvement to the Skel editing experience.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the editor workflow that should improve.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: server
+    attributes:
+      label: Language-server impact
+      description: State whether the capability requires a coordinated skelc change.

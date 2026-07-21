@@ -1,0 +1,10 @@
+.vscode/**
+.github/**
+node_modules/**
+scripts/**
+src/**
+package-lock.json
+.gitignore
+.npmrc
+AGENTS.md
+*.vsix
