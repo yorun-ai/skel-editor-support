@@ -13,4 +13,5 @@ package-lock.json
 .npmrc
 AGENTS.md
 CHANGELOG.md
+assets/*.svg
 *.vsix
