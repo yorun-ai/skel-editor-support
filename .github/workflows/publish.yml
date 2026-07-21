@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: marketplace-${{ github.event.release.tag_name }}
+  group: publish-${{ github.event.release.tag_name || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -83,3 +83,57 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: npm run publish:marketplace --workspace vscode-skel -- --packagePath "$GITHUB_WORKSPACE/dist/vscode-skel-${{ github.event.release.tag_name }}.vsix"
+
+  npm:
+    name: npm
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out release
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply release version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          case "$RELEASE_TAG" in
+            v*) ;;
+            *)
+              echo "Release tag must use the v<version> format"
+              exit 1
+              ;;
+          esac
+
+          npm version "${RELEASE_TAG#v}" \
+            --workspaces \
+            --include-workspace-root \
+            --no-git-tag-version \
+            --allow-same-version
+
+      - name: Validate package
+        run: npm run check --workspace @yorun-ai/skel-highlight
+
+      - name: Verify release commit is on main
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor HEAD origin/main
+
+      - name: Publish package
+        run: npm publish --workspace @yorun-ai/skel-highlight
