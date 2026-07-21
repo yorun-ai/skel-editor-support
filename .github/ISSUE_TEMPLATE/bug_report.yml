@@ -1,20 +1,30 @@
 name: Bug report
-description: Report an issue with Skel editing or extension startup.
+description: Report an issue with a Skel editor integration or highlighter.
 title: "[Bug]: "
 labels: [bug]
 body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Shiki
+        - TextMate grammar
+        - Visual Studio Code
+    validations:
+      required: true
   - type: input
     id: versions
     attributes:
       label: Versions
-      description: Include the extension, VS Code, and skelc versions.
+      description: Include relevant package, editor, highlighter, and skelc versions.
     validations:
       required: true
   - type: textarea
     id: reproduction
     attributes:
       label: Minimal reproduction
-      description: Include a minimal Skel file, relevant settings, and reproduction steps.
+      description: Include minimal Skel source, relevant settings or code, and reproduction steps.
     validations:
       required: true
   - type: textarea
