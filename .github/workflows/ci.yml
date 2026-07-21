@@ -30,3 +30,29 @@ jobs:
 
       - name: Validate extension
         run: npm run check
+
+      - name: Check out skelc
+        uses: actions/checkout@v7
+        with:
+          repository: yorun-ai/skelc
+          path: .test/skelc
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: .test/skelc/go.mod
+          cache-dependency-path: .test/skelc/go.sum
+
+      - name: Build skelc language server
+        working-directory: .test/skelc
+        run: GOWORK=off go build -o "$RUNNER_TEMP/skelc" ./cmd/skelc
+
+      - name: Test LSP integration
+        env:
+          SKELC_PATH: ${{ runner.temp }}/skelc
+        run: npm run test:integration
+
+      - name: Test Extension Host
+        env:
+          SKELC_PATH: ${{ runner.temp }}/skelc
+        run: xvfb-run -a npm run test:extension
