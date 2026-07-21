@@ -19,6 +19,7 @@
 - Edit the canonical grammar under `packages/highlight/src`, highlighter adapters in that package, extension client code under `editors/vscode/src`, themes under `editors/vscode/themes`, and VS Code language behavior in `editors/vscode/language-configuration.json`.
 - `editors/vscode/syntaxes`, package `dist` directories, generated licenses, and extension `out` are build artifacts and must not be committed.
 - `dist` and `*.vsix` are release artifacts and must not be committed. Build them only as part of an explicit release or packaging task.
+- Keep workspace source versions at the `0.0.0` development placeholder. The Publish workflow derives the release version from a `v<version>` GitHub Release tag and applies it only in the temporary Actions checkout.
 - Keep `node_modules` and local editor settings out of the repository.
 - Lock files must use public package registry URLs; do not commit internal mirrors or credentials.
 

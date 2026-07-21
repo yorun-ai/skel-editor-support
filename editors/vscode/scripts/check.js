@@ -17,8 +17,9 @@ for (const file of jsonFiles) {
 }
 
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-if (manifest.version !== "0.9.0") {
-  throw new Error(`expected first public version 0.9.0, found ${manifest.version}`);
+const highlightManifest = JSON.parse(fs.readFileSync(path.join(workspaceRoot, "packages", "highlight", "package.json"), "utf8"));
+if (manifest.version !== highlightManifest.version) {
+  throw new Error(`workspace versions differ: vscode=${manifest.version}, highlight=${highlightManifest.version}`);
 }
 for (const file of [manifest.main, manifest.icon, "assets/editor.png", "CHANGELOG.md"]) {
   if (!fs.existsSync(path.join(root, file))) {

@@ -52,6 +52,10 @@ npm run check
 
 Open this repository in VS Code and press F5 to launch the extension from `editors/vscode`.
 
+## Release Versions
+
+Source manifests use `0.0.0` as a development placeholder. Publishing a GitHub Release with a `v<version>` tag applies that version to every workspace package in the temporary Actions checkout before validation and packaging.
+
 ## License
 
 Skel Editor Support is open source under the [Apache License 2.0](LICENSE).
