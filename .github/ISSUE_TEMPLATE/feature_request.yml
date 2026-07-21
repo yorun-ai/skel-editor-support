@@ -1,8 +1,19 @@
 name: Feature request
-description: Propose an improvement to the Skel editing experience.
+description: Propose an editor integration or syntax-highlighting improvement.
 title: "[Feature]: "
 labels: [enhancement]
 body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - New highlighter integration
+        - Shiki
+        - TextMate grammar
+        - Visual Studio Code
+    validations:
+      required: true
   - type: textarea
     id: problem
     attributes:

@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: monthly
     groups:
-      extension-dependencies:
+      editor-support-dependencies:
         patterns: ["*"]
 
   - package-ecosystem: github-actions

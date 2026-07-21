@@ -7,7 +7,7 @@ const test = require("node:test");
 const oniguruma = require("vscode-oniguruma");
 const textmate = require("vscode-textmate");
 
-const root = path.resolve(__dirname, "..", "..");
+const root = path.resolve(__dirname, "..");
 
 async function loadGrammar() {
   const wasm = fs.readFileSync(require.resolve("vscode-oniguruma/release/onig.wasm"));
@@ -21,7 +21,7 @@ async function loadGrammar() {
       if (scopeName !== "source.skel") {
         return null;
       }
-      const source = fs.readFileSync(path.join(root, "syntaxes", "skel.tmLanguage.json"), "utf8");
+      const source = fs.readFileSync(path.join(root, "src", "skel.tmLanguage.json"), "utf8");
       return textmate.parseRawGrammar(source, "skel.tmLanguage.json");
     }
   });

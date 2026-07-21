@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const root = path.resolve(__dirname, "..");
+const workspaceRoot = path.resolve(root, "..", "..");
 const jsonFiles = [
   "package.json",
   "language-configuration.json",
@@ -25,12 +26,18 @@ for (const file of [manifest.main, manifest.icon, "assets/editor.png", "CHANGELO
   }
 }
 
-const lock = fs.readFileSync(path.join(root, "package-lock.json"), "utf8");
+const lock = fs.readFileSync(path.join(workspaceRoot, "package-lock.json"), "utf8");
 if (lock.includes("npm.cew.io")) {
   throw new Error("package-lock.json contains an internal registry URL");
 }
 
 const extensionSource = fs.readFileSync(path.join(root, "out/extension.js"), "utf8");
 new Function("require", "module", "exports", extensionSource);
+
+const generatedGrammar = fs.readFileSync(path.join(root, "syntaxes", "skel.tmLanguage.json"));
+const canonicalGrammar = fs.readFileSync(path.join(workspaceRoot, "packages", "highlight", "src", "skel.tmLanguage.json"));
+if (!generatedGrammar.equals(canonicalGrammar)) {
+  throw new Error("generated VS Code grammar differs from packages/highlight");
+}
 
 console.log("vscode-skel manifest and bundled extension are valid");

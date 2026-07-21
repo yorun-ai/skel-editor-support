@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Validate extension
+      - name: Validate editor support packages
         run: npm run check
 
       - name: Check out skelc

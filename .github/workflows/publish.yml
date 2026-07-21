@@ -39,11 +39,11 @@ jobs:
       - name: Verify Marketplace credentials
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx --no-install vsce verify-pat yorun
+        run: npm run verify:marketplace --workspace vscode-skel
 
       - name: Validate release tag
         if: github.event_name == 'release'
-        run: npm run check:release -- "${{ github.event.release.tag_name }}"
+        run: npm run check:release --workspace vscode-skel -- "${{ github.event.release.tag_name }}"
 
       - name: Verify release commit is on main
         if: github.event_name == 'release'
@@ -53,10 +53,10 @@ jobs:
 
       - name: Package extension
         if: github.event_name == 'release'
-        run: npm run package:vsix -- --out "dist/vscode-skel-${{ github.event.release.tag_name }}.vsix"
+        run: npm run package:vsix --workspace vscode-skel -- --out "$GITHUB_WORKSPACE/dist/vscode-skel-${{ github.event.release.tag_name }}.vsix"
 
       - name: Publish extension
         if: github.event_name == 'release'
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npm run publish:marketplace -- --packagePath "dist/vscode-skel-${{ github.event.release.tag_name }}.vsix"
+        run: npm run publish:marketplace --workspace vscode-skel -- --packagePath "$GITHUB_WORKSPACE/dist/vscode-skel-${{ github.event.release.tag_name }}.vsix"
