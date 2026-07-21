@@ -70,6 +70,10 @@ jobs:
           git fetch origin main
           git merge-base --is-ancestor HEAD origin/main
 
+      - name: Create release directory
+        if: github.event_name == 'release'
+        run: mkdir -p "$GITHUB_WORKSPACE/dist"
+
       - name: Package extension
         if: github.event_name == 'release'
         run: npm run package:vsix --workspace vscode-skel -- --out "$GITHUB_WORKSPACE/dist/vscode-skel-${{ github.event.release.tag_name }}.vsix"
