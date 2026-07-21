@@ -1,6 +1,6 @@
 {
   "name": "@yorun-ai/skel-highlight",
-  "version": "0.9.0",
+  "version": "0.0.0",
   "description": "Syntax highlighting definitions for the Skel contract language.",
   "type": "module",
   "license": "Apache-2.0",

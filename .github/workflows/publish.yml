@@ -33,6 +33,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Apply release version
+        if: github.event_name == 'release'
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          case "$RELEASE_TAG" in
+            v*) ;;
+            *)
+              echo "Release tag must use the v<version> format"
+              exit 1
+              ;;
+          esac
+
+          npm version "${RELEASE_TAG#v}" \
+            --workspaces \
+            --include-workspace-root \
+            --no-git-tag-version \
+            --allow-same-version
+
       - name: Validate extension
         run: npm run check
 
