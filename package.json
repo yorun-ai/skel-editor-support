@@ -114,6 +114,9 @@
   "scripts": {
     "build": "esbuild ./src/extension.js --bundle --platform=node --external:vscode --sourcemap --outfile=./out/extension.js",
     "check": "npm run build && npm run test:unit && node ./scripts/check.js",
+    "check:release": "node ./scripts/check-release.js",
+    "package:vsix": "vsce package --no-dependencies",
+    "publish:marketplace": "vsce publish",
     "test:unit": "node --test ./test/unit/*.test.js",
     "test:integration": "node --test ./test/lsp.integration.test.js",
     "test:extension": "node ./test/run-extension-tests.js",
@@ -124,6 +127,7 @@
   },
   "devDependencies": {
     "@vscode/test-electron": "^3.0.0",
+    "@vscode/vsce": "3.9.2",
     "esbuild": "^0.28.1",
     "vscode-oniguruma": "^2.0.1",
     "vscode-textmate": "^9.3.2"

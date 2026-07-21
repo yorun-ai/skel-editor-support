@@ -1,9 +1,13 @@
 .vscode/**
+.test/**
+.vscode-test/**
 .github/**
+dist/**
 node_modules/**
 scripts/**
 src/**
 test/**
+out/**/*.map
 package-lock.json
 .gitignore
 .npmrc
