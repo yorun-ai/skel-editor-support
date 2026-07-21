@@ -4,9 +4,9 @@
 [![License](https://img.shields.io/github/license/yorun-ai/skel-editor-support)](https://github.com/yorun-ai/skel-editor-support/blob/main/LICENSE)
 [![Version](https://img.shields.io/github/v/release/yorun-ai/skel-editor-support?label=version&cacheSeconds=300)](https://github.com/yorun-ai/skel-editor-support/releases/latest)
 
-The official VS Code extension for the [Skel](https://yorun.ai/skelc/syntax) contract language.
+VS Code language support for the [Skel](https://github.com/yorun-ai/skelc) contract language.
 
-![Skel editing in VS Code](assets/editor.png)
+![Skel editing in VS Code](https://raw.githubusercontent.com/yorun-ai/skel-editor-support/main/editors/vscode/assets/editor.png)
 
 ## Features
 
@@ -73,14 +73,6 @@ Protocol and Extension Host tests require a local skelc build with LSP support:
 SKELC_PATH=/absolute/path/to/skelc npm run test:integration
 SKELC_PATH=/absolute/path/to/skelc npm run test:extension
 ```
-
-## Release
-
-Publishing a GitHub Release automatically derives the packaged extension version from its `v<version>` tag and publishes it to the VS Code Marketplace. For example, tag `v0.9.0` produces extension version `0.9.0`; source manifests retain the `0.0.0` development placeholder.
-
-The repository must provide a `VSCE_PAT` secret to the `vscode-marketplace` GitHub environment. The token must belong to the `yorun` Marketplace publisher and have Marketplace management permission. The workflow only publishes tags whose commit is contained in `main`.
-
-Run the `Publish` workflow manually to verify the configured Marketplace credentials without packaging or publishing an extension.
 
 ## License
 

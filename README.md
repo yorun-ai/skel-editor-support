@@ -3,7 +3,7 @@
 [![CI](https://github.com/yorun-ai/skel-editor-support/actions/workflows/ci.yml/badge.svg)](https://github.com/yorun-ai/skel-editor-support/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/yorun-ai/skel-editor-support)](LICENSE)
 
-Editor integrations and syntax highlighting for the [Skel](https://yorun.ai/skelc/syntax) contract language.
+Editor integrations and syntax highlighting for the [Skel](https://github.com/yorun-ai/skelc) contract language.
 
 ## Packages
 
