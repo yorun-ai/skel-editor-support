@@ -1,6 +1,7 @@
 name: Publish
 
 on:
+  workflow_dispatch:
   release:
     types: [published]
 
@@ -21,7 +22,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -35,18 +36,27 @@ jobs:
       - name: Validate extension
         run: npm run check
 
+      - name: Verify Marketplace credentials
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx --no-install vsce verify-pat yorun
+
       - name: Validate release tag
+        if: github.event_name == 'release'
         run: npm run check:release -- "${{ github.event.release.tag_name }}"
 
       - name: Verify release commit is on main
+        if: github.event_name == 'release'
         run: |
           git fetch origin main
           git merge-base --is-ancestor HEAD origin/main
 
       - name: Package extension
+        if: github.event_name == 'release'
         run: npm run package:vsix -- --out "dist/vscode-skel-${{ github.event.release.tag_name }}.vsix"
 
       - name: Publish extension
+        if: github.event_name == 'release'
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: npm run publish:marketplace -- --packagePath "dist/vscode-skel-${{ github.event.release.tag_name }}.vsix"
