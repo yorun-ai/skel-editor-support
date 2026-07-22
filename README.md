@@ -12,30 +12,18 @@ Editor integrations and syntax highlighting for the [Skel](https://github.com/yo
 | [`@yorun-ai/skel-highlight`](packages/highlight) | Shared TextMate grammar and frontend highlighter integrations |
 | [`vscode-skel`](editors/vscode) | VS Code extension and `skelc lsp` client |
 
-## Shiki
+## Syntax Highlighting
 
-Install Shiki and the Skel language registration:
+`@yorun-ai/skel-highlight` provides adapters for:
 
-```sh
-npm install shiki @yorun-ai/skel-highlight
-```
+- Shiki
+- PrismJS and Refractor
+- Highlight.js and Lowlight
+- Monaco Editor with Monarch
+- Starry Night
+- CodeMirror 6
 
-```js
-import { createHighlighter } from "shiki";
-import skel from "@yorun-ai/skel-highlight/shiki";
-
-const highlighter = await createHighlighter({
-  langs: [skel],
-  themes: ["github-dark"]
-});
-
-const html = highlighter.codeToHtml("domain demo.user", {
-  lang: "skel",
-  theme: "github-dark"
-});
-```
-
-The TextMate grammar in `packages/highlight` is the canonical lexical highlighting definition. The VS Code extension consumes a generated copy of the same grammar.
+See the [package README](packages/highlight) for installation and registration examples. The TextMate grammar in `packages/highlight` is the canonical lexical highlighting definition shared by Shiki, Starry Night, and the VS Code extension; the other adapters reuse one shared set of Skel keywords and built-in types.
 
 ## Visual Studio Code
 

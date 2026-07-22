@@ -1,0 +1,41 @@
+domain demo.compatibility
+
+/* Shared highlighting fixture. */
+@desc("User contract")
+pub enum UserStatus {
+    ACTIVE
+    DISABLED
+}
+
+pub config CacheConfig eternal {
+    ttl: duration
+}
+
+pub data Page<TItem> {
+    items: list<TItem>
+    nextToken: string?
+}
+
+pub actor ClientActor {
+    via client {}
+    auth {
+        credential {
+            subject: string
+        }
+    }
+}
+
+pub service UserService {
+    for ClientActor via client
+
+    @desc("""Find a user
+by identifier.""")
+    method getUser {
+        input {
+            userId: uuid
+        }
+        output Page<UserStatus>?
+    }
+}
+
+// Keep incomplete editing states covered by compatibility.test.js.
