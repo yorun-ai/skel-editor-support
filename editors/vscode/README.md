@@ -11,7 +11,8 @@ VS Code language support for the [Skel](https://github.com/yorun-ai/skelc) contr
 ## Features
 
 - TextMate syntax highlighting for Skel declarations, types, decorators, comments, and strings
-- Live syntax diagnostics, formatting, completion, hover details, and hierarchical symbols from `skelc lsp`
+- Recoverable syntax and workspace semantic diagnostics, including multiple diagnostics and related locations
+- Diagnostic quick fixes, formatting, completion, hover details, and hierarchical symbols from `skelc lsp`
 - Go to Definition and Find All References across workspace Skel files
 - Workspace symbol search and top-level declaration rename
 - Best-effort navigation while the current document contains a syntax error
@@ -24,12 +25,12 @@ Install `skelc` first:
 
 ```sh
 go install go.yorun.ai/skelc/cmd/skelc@latest
-skelc lsp --help
+skelc version --output-format json
 ```
 
 Install the `Skel` extension from the VS Code Marketplace, then open a `.skel` file. The extension starts `skelc lsp` from `PATH`.
 
-The extension requires a skelc build whose `lsp` command provides the capabilities listed above. Older language servers continue to expose only the capabilities they advertise. Complete naming, type, and cross-domain semantic validation still belongs to `skelc check`.
+The extension requires `skelc v0.9.4` or newer. The language server reports syntax and workspace semantic diagnostics while you edit; use `skelc check` for the same validation in terminals and CI.
 
 ## Configuration
 
@@ -53,7 +54,7 @@ Untitled Skel documents receive language-server support. Virtual and untrusted w
 
 If the server does not start:
 
-1. Run `skelc lsp --help` in the same environment as the VS Code extension host.
+1. Run `skelc version --output-format json` in the same environment as the VS Code extension host and confirm the version is v0.9.4 or newer.
 2. Set `skelc.path` to the executable's absolute path when it is not on `PATH`.
 3. Run `Skel: Restart Language Server`.
 4. Run `Skel: Show Language Server Output` and set `skelc.trace.server` to `messages` or `verbose` when protocol details are needed.
