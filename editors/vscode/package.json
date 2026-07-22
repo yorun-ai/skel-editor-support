@@ -96,7 +96,7 @@
           "type": "string",
           "default": "skelc",
           "scope": "machine-overridable",
-          "description": "Path to the skelc executable used for the Skel language server. Changes restart the server automatically."
+          "description": "Path to the skelc v0.9.4 or newer executable used for the Skel language server. Changes restart the server automatically."
         },
         "skelc.trace.server": {
           "type": "string",

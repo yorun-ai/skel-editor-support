@@ -39,7 +39,7 @@ The TextMate grammar in `packages/highlight` is the canonical lexical highlighti
 
 ## Visual Studio Code
 
-The [Skel VS Code extension](editors/vscode) provides syntax highlighting, a color theme, diagnostics, symbols, definitions, and references through `skelc lsp`. Its Marketplace identity remains `yorun.vscode-skel`.
+The [Skel VS Code extension](editors/vscode) provides syntax highlighting, a color theme, recoverable syntax and workspace semantic diagnostics, quick fixes, formatting, completion, hover details, hierarchical symbols, definitions, references, and top-level declaration rename through `skelc lsp`. Its Marketplace identity remains `yorun.vscode-skel`.
 
 ## Development
 
