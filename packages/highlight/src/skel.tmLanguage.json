@@ -185,7 +185,7 @@
               "name": "keyword.declaration.via.skel"
             },
             "2": {
-              "name": "entity.name.function.skel"
+              "name": "constant.language.actor-via.skel"
             }
           }
         }
@@ -306,7 +306,7 @@
       "patterns": [
         {
           "name": "keyword.control.skel",
-          "match": "\\b(pub|domain|import|as|via|for|auth|noauth|permission|credential|info|method|require|trigger|input|output|payload|resource|action|check|all|any)\\b"
+          "match": "\\b(pub|domain|import|as|via|for|auth|noauth|permission|credential|info|method|require|trigger|input|output|payload|resource|action|check|all|any|client|agent|openapi|eternal|instant)\\b"
         }
       ]
     },

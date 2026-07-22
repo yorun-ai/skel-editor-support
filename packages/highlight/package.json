@@ -9,19 +9,28 @@
     "url": "https://github.com/yorun-ai/skel-editor-support.git",
     "directory": "packages/highlight"
   },
-  "homepage": "https://github.com/yorun-ai/skel-editor-support#shiki",
+  "homepage": "https://github.com/yorun-ai/skel-editor-support#syntax-highlighting",
   "bugs": {
     "url": "https://github.com/yorun-ai/skel-editor-support/issues"
   },
   "keywords": [
     "skel",
     "shiki",
+    "prismjs",
+    "highlight.js",
+    "monaco-editor",
+    "codemirror",
     "syntax-highlighting",
     "textmate"
   ],
   "files": [
     "dist",
     "src/index.d.ts",
+    "src/prism.d.ts",
+    "src/highlightjs.d.ts",
+    "src/monaco.d.ts",
+    "src/starry-night.d.ts",
+    "src/codemirror.d.ts",
     "src/skel.tmLanguage.json",
     "LICENSE",
     "README.md"
@@ -35,6 +44,26 @@
       "types": "./src/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./prism": {
+      "types": "./src/prism.d.ts",
+      "default": "./dist/prism.js"
+    },
+    "./highlightjs": {
+      "types": "./src/highlightjs.d.ts",
+      "default": "./dist/highlightjs.js"
+    },
+    "./monaco": {
+      "types": "./src/monaco.d.ts",
+      "default": "./dist/monaco.js"
+    },
+    "./starry-night": {
+      "types": "./src/starry-night.d.ts",
+      "default": "./dist/starry-night.js"
+    },
+    "./codemirror": {
+      "types": "./src/codemirror.d.ts",
+      "default": "./dist/codemirror.js"
+    },
     "./textmate": "./src/skel.tmLanguage.json"
   },
   "types": "./src/index.d.ts",
@@ -44,20 +73,54 @@
     "node": ">=20"
   },
   "peerDependencies": {
+    "@codemirror/language": "^6.12.4",
+    "@wooorm/starry-night": "^3.10.0",
+    "highlight.js": "^11.11.1",
+    "monaco-editor": "^0.56.0",
+    "prismjs": "^1.30.0",
     "shiki": "^4.3.1"
+  },
+  "peerDependenciesMeta": {
+    "@codemirror/language": {
+      "optional": true
+    },
+    "@wooorm/starry-night": {
+      "optional": true
+    },
+    "highlight.js": {
+      "optional": true
+    },
+    "monaco-editor": {
+      "optional": true
+    },
+    "prismjs": {
+      "optional": true
+    },
+    "shiki": {
+      "optional": true
+    }
   },
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
-    "build": "node ../../scripts/prepare-assets.js && esbuild ./src/index.js --bundle --format=esm --platform=neutral --outfile=./dist/index.js",
+    "build": "node ../../scripts/prepare-assets.js && esbuild ./src/index.js ./src/prism.js ./src/highlightjs.js ./src/monaco.js ./src/starry-night.js ./src/codemirror.js --bundle --format=esm --platform=neutral --packages=external --outdir=./dist",
     "check": "npm run build && npm test && npm run typecheck",
     "prepack": "npm run build",
     "test": "node --test ./test/*.test.js ./test/*.test.cjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@codemirror/language": "6.12.4",
+    "@lezer/highlight": "1.2.3",
+    "@types/prismjs": "1.26.6",
+    "@wooorm/starry-night": "3.10.0",
     "esbuild": "^0.28.1",
+    "highlight.js": "11.11.1",
+    "lowlight": "3.3.0",
+    "monaco-editor": "0.56.0",
+    "prismjs": "1.30.0",
+    "refractor": "5.0.0",
     "shiki": "4.3.1",
     "typescript": "^7.0.2",
     "vscode-oniguruma": "^2.0.1",

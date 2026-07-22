@@ -57,3 +57,49 @@ jobs:
         env:
           SKELC_PATH: ${{ runner.temp }}/skelc
         run: xvfb-run -a npm run test:extension
+
+  highlight-compatibility:
+    name: Highlight compatibility (Node ${{ matrix.node-version }}, ${{ matrix.peer-set }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - node-version: 20
+            peer-set: locked
+          - node-version: 24
+            peer-set: locked
+          - node-version: 24
+            peer-set: latest-compatible
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install dependencies with the repository Node.js version
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Select compatibility Node.js version
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install latest compatible highlighter peers
+        if: matrix.peer-set == 'latest-compatible'
+        run: >-
+          npm install --no-save --package-lock=false
+          @codemirror/language@^6
+          @wooorm/starry-night@^3
+          highlight.js@^11
+          lowlight@^3
+          monaco-editor@^0.56
+          prismjs@^1
+          refractor@^5
+          shiki@^4
+
+      - name: Validate syntax-highlighting consumers
+        run: npm run check --workspace @yorun-ai/skel-highlight

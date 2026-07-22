@@ -50,3 +50,22 @@ test("TextMate grammar recognizes representative Skel constructs", async () => {
     assert.ok(scopes.includes(expectedScope), `${line} did not contain ${expectedScope}: ${scopes.join(", ")}`);
   }
 });
+
+test("TextMate grammar preserves multiline and incomplete editing state", async () => {
+  const grammar = await loadGrammar();
+  assert.ok(grammar);
+  const fixture = fs.readFileSync(path.join(root, "test", "fixtures", "compatibility.skel"), "utf8");
+  let ruleStack = textmate.INITIAL;
+  const scopes = [];
+  for (const line of fixture.split("\n")) {
+    const tokenized = grammar.tokenizeLine(line, ruleStack);
+    ruleStack = tokenized.ruleStack;
+    scopes.push(...tokenized.tokens.flatMap((token) => token.scopes));
+  }
+  assert.ok(scopes.includes("comment.block.skel"));
+  assert.ok(scopes.includes("string.quoted.triple.skel"));
+  assert.ok(scopes.includes("constant.language.actor-via.skel"));
+
+  const incomplete = grammar.tokenizeLine('@desc("unfinished', textmate.INITIAL);
+  assert.ok(incomplete.tokens.some((token) => token.scopes.includes("string.quoted.double.skel")));
+});
