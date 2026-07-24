@@ -10,7 +10,7 @@ Editor integrations and syntax highlighting for the [Skel](https://github.com/yo
 | Package | Description |
 | --- | --- |
 | [`@yorun-ai/skel-highlight`](packages/highlight) | Shared TextMate grammar and frontend highlighter integrations |
-| [`vscode-skel`](editors/vscode) | VS Code extension and `skelc lsp` client |
+| [`skeleton`](editors/vscode) | VS Code extension and `skelc lsp` client |
 
 ## Syntax Highlighting
 
@@ -27,7 +27,7 @@ See the [package README](packages/highlight) for installation and registration e
 
 ## Visual Studio Code
 
-The [Skel VS Code extension](editors/vscode) provides syntax highlighting, a color theme, recoverable syntax and workspace semantic diagnostics, quick fixes, formatting, completion, hover details, hierarchical symbols, definitions, references, and top-level declaration rename through `skelc lsp`. Its Marketplace identity remains `yorun.vscode-skel`.
+The [Skeleton VS Code extension](editors/vscode) provides syntax highlighting, a color theme, recoverable syntax and workspace semantic diagnostics, quick fixes, formatting, completion, hover details, hierarchical symbols, definitions, references, and top-level declaration rename through `skelc lsp`. Its Marketplace identity is `yorun.skeleton`.
 
 ## Development
 

@@ -115,7 +115,7 @@ function waitForExit(process, timeout) {
 test("skelc completes the LSP initialize and shutdown lifecycle", {
   skip: !process.env.SKELC_PATH
 }, async () => {
-  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "vscode-skel-lsp-"));
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "skeleton-lsp-"));
   const userPath = path.join(workspace, "user.skel");
   const orderPath = path.join(workspace, "order.skel");
   const problemPath = path.join(workspace, "problem.skel");

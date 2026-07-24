@@ -15,7 +15,7 @@
     "build": "npm run build --workspaces --if-present",
     "check": "npm run check --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
-    "test:integration": "npm run test:integration --workspace vscode-skel",
-    "test:extension": "npm run test:extension --workspace vscode-skel"
+    "test:integration": "npm run test:integration --workspace skeleton",
+    "test:extension": "npm run test:extension --workspace skeleton"
   }
 }

@@ -41,4 +41,4 @@ if (!generatedGrammar.equals(canonicalGrammar)) {
   throw new Error("generated VS Code grammar differs from packages/highlight");
 }
 
-console.log("vscode-skel manifest and bundled extension are valid");
+console.log("skeleton manifest and bundled extension are valid");

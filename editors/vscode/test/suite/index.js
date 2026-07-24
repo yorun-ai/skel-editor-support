@@ -22,7 +22,7 @@ async function run() {
     vscode.ConfigurationTarget.Global
   );
 
-  const extension = vscode.extensions.getExtension("yorun.vscode-skel");
+  const extension = vscode.extensions.getExtension("yorun.skeleton");
   assert.ok(extension, "Skel extension is installed in the test host");
   await extension.activate();
   assert.equal(extension.isActive, true);

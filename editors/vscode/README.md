@@ -1,10 +1,10 @@
-# Skel for Visual Studio Code
+# Skeleton DSL Support
 
 [![CI](https://github.com/yorun-ai/skel-editor-support/actions/workflows/ci.yml/badge.svg)](https://github.com/yorun-ai/skel-editor-support/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/yorun-ai/skel-editor-support)](https://github.com/yorun-ai/skel-editor-support/blob/main/LICENSE)
 [![Version](https://img.shields.io/github/v/release/yorun-ai/skel-editor-support?label=version&cacheSeconds=300)](https://github.com/yorun-ai/skel-editor-support/releases/latest)
 
-VS Code language support for the [Skel](https://github.com/yorun-ai/skelc) contract language.
+VS Code language support for [Skeleton (Skel)](https://github.com/yorun-ai/skelc), an open-source DSL for describing software architecture.
 
 ![Skel editing in VS Code](https://raw.githubusercontent.com/yorun-ai/skel-editor-support/main/editors/vscode/assets/editor.png)
 
@@ -28,7 +28,7 @@ go install go.yorun.ai/skelc/cmd/skelc@latest
 skelc version --output-format json
 ```
 
-Install the `Skel` extension from the VS Code Marketplace, then open a `.skel` file. The extension starts `skelc lsp` from `PATH`.
+Install the `Skeleton DSL Support` extension from the VS Code Marketplace, then open a `.skel` file. The extension starts `skelc lsp` from `PATH`.
 
 The extension requires `skelc v0.9.4` or newer. The language server reports syntax and workspace semantic diagnostics while you edit; use `skelc check` for the same validation in terminals and CI.
 
