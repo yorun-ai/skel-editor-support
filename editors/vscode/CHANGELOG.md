@@ -12,6 +12,7 @@ All notable changes to the Skel VS Code extension are documented in this file.
 ### Changed
 
 - Require skelc v0.9.4 or newer for language-server support
+- Rename the Marketplace extension identity to `yorun.skeleton` and the display name to `Skeleton DSL Support`
 
 ## [0.9.0] - 2026-07-21
 
