@@ -15,7 +15,7 @@ import skelPrism, { registerSkelPrism } from "../dist/prism.js";
 import skelStarryNight from "../dist/starry-night.js";
 import { builtinTypes, keywords } from "../src/language.js";
 
-const source = "pub data User {\n  id: int\n  @desc(\"Account\")\n}";
+const source = "pub data User {\n  id: int\n  @desc(\"Account\")\n  @sensitive\n  token: string\n}";
 
 test("Prism highlights Skel keywords, declarations, and built-in types", () => {
   assert.equal(registerSkelPrism.displayName, "skel");
@@ -25,6 +25,7 @@ test("Prism highlights Skel keywords, declarations, and built-in types", () => {
   assert.match(html, /token class-name">User/);
   assert.match(html, /token builtin">int/);
   assert.match(html, /token decorator annotation">@desc/);
+  assert.match(html, /token decorator annotation">@sensitive/);
   assert.doesNotMatch(
     Prism.highlight("credential { subject: string }", Prism.languages.skel, "skel"),
     /token keyword">subject/
@@ -44,6 +45,7 @@ test("Highlight.js highlights representative Skel constructs", () => {
   assert.match(html, /hljs-title class_">User/);
   assert.match(html, /hljs-type">int/);
   assert.match(html, /hljs-meta">@desc/);
+  assert.match(html, /hljs-meta">@sensitive/);
 });
 
 test("Lowlight and Refractor reuse the Highlight.js and Prism adapters", () => {
@@ -98,4 +100,5 @@ test("CodeMirror stream language emits semantic highlight classes", () => {
   assert.ok(tokens.some((token) => token.value === "User" && token.classes === "tok-className"));
   assert.ok(tokens.some((token) => token.value === "int" && token.classes === "tok-typeName"));
   assert.ok(tokens.some((token) => token.value === "@desc" && token.classes === "tok-meta"));
+  assert.ok(tokens.some((token) => token.value === "@sensitive" && token.classes === "tok-meta"));
 });

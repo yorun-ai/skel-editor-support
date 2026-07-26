@@ -39,7 +39,8 @@ test("TextMate grammar recognizes representative Skel constructs", async () => {
     ["    id: int", "support.type.skel"],
     ["    method getUser {", "entity.name.function.method.skel"],
     ["// contract comment", "comment.line.double-slash.skel"],
-    ["@desc(\"User contract\")", "entity.name.function.decorator.skel"]
+    ["@desc(\"User contract\")", "entity.name.function.decorator.skel"],
+    ["@sensitive", "entity.name.function.decorator.skel"]
   ];
 
   let ruleStack = textmate.INITIAL;
