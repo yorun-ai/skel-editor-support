@@ -40,7 +40,7 @@ Do not commit generated grammar copies, package `dist` directories, extension `o
 When Skel syntax changes, update the canonical grammar and representative fixtures here, and coordinate the language implementation and documentation changes with:
 
 - [`yorun-ai/skelc`](https://github.com/yorun-ai/skelc)
-- [`yorun-ai/vine-doc`](https://github.com/yorun-ai/vine-doc)
+- [`yorun-ai/skel-site`](https://github.com/yorun-ai/skel-site)
 
 When an LSP capability changes, implement it in `skelc lsp` first, keep the extension client thin, and update the minimum compatible skelc version in the extension README when necessary.
 
