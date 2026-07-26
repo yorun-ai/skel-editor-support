@@ -8,6 +8,7 @@ pub enum UserStatus {
 }
 
 pub config CacheConfig eternal {
+    @sensitive
     ttl: duration
 }
 
@@ -32,6 +33,7 @@ pub service UserService {
 by identifier.""")
     method getUser {
         input {
+            @sensitive
             userId: uuid
         }
         output Page<UserStatus>?
