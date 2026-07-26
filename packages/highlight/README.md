@@ -98,4 +98,5 @@ The CodeMirror entrypoint provides stream-based syntax highlighting. Semantic co
 ## TextMate
 
 The raw grammar is available as `@yorun-ai/skel-highlight/textmate` for TextMate-compatible consumers.
-Decorator highlighting includes semantic decorators such as `@sensitive` as well as documentation decorators such as `@desc` and `@example`.
+Decorator identifiers are highlighted generically, including `@desc`, `@example`, and `@sensitive`.
+Semantic validation remains the responsibility of `skelc lsp`.
