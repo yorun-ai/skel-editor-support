@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: yorun-ai/skelc
-          ref: v0.10.0
+          ref: v0.10.1
           path: .test/skelc
 
       - name: Set up Go

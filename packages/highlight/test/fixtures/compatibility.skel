@@ -5,6 +5,8 @@ domain demo.compatibility
 pub enum UserStatus {
     ACTIVE
     DISABLED
+    @deprecated("Use DISABLED instead")
+    LEGACY
 }
 
 pub config CacheConfig eternal {
