@@ -35,7 +35,8 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: yorun-ai/skelc
-          ref: v0.10.0
+          # Use the dependent skelc PR until v0.10.1 is published.
+          ref: feat/deprecated-support
           path: .test/skelc
 
       - name: Set up Go

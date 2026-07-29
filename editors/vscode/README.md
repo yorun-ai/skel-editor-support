@@ -30,7 +30,7 @@ skelc version --output-format json
 
 Install the `Skeleton DSL Support` extension from the VS Code Marketplace, then open a `.skel` file. The extension starts `skelc lsp` from `PATH`.
 
-The extension requires `skelc v0.10.0` or newer. The language server reports syntax and workspace semantic diagnostics while you edit; use `skelc check` for the same validation in terminals and CI.
+The extension requires `skelc v0.10.1` or newer. The language server reports syntax and workspace semantic diagnostics while you edit; use `skelc check` for the same validation in terminals and CI. Deprecated declarations and elements are identified in completion, hover, and symbol views.
 
 ## Configuration
 
@@ -54,7 +54,7 @@ Untitled Skel documents receive language-server support. Virtual and untrusted w
 
 If the server does not start:
 
-1. Run `skelc version --output-format json` in the same environment as the VS Code extension host and confirm the version is v0.10.0 or newer.
+1. Run `skelc version --output-format json` in the same environment as the VS Code extension host and confirm the version is v0.10.1 or newer.
 2. Set `skelc.path` to the executable's absolute path when it is not on `PATH`.
 3. Run `Skel: Restart Language Server`.
 4. Run `Skel: Show Language Server Output` and set `skelc.trace.server` to `messages` or `verbose` when protocol details are needed.

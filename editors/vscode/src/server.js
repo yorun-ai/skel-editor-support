@@ -3,7 +3,7 @@
 const childProcess = require("child_process");
 
 const defaultCommand = "skelc";
-const minimumVersion = "v0.10.0";
+const minimumVersion = "v0.10.1";
 
 function normalizeCommand(value) {
   if (typeof value !== "string" || value.trim() === "") {

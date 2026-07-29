@@ -6,12 +6,13 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ### Added
 
+- Deprecated declaration and element presentation from `skelc lsp`
 - Recoverable syntax and workspace semantic diagnostics with related locations and quick fixes
 - Formatting, completion, hover details, hierarchical symbols, workspace symbols, and top-level declaration rename
 
 ### Changed
 
-- Require skelc v0.10.0 or newer for language-server support
+- Require skelc v0.10.1 or newer for language-server support
 - Rename the Marketplace extension identity to `yorun.skeleton` and the display name to `Skeleton DSL Support`
 
 ## [0.9.0] - 2026-07-21

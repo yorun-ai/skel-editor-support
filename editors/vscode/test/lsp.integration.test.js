@@ -120,7 +120,7 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
   const orderPath = path.join(workspace, "order.skel");
   const problemPath = path.join(workspace, "problem.skel");
   const namingPath = path.join(workspace, "naming.skel");
-  const userSource = "domain demo.user\n@desc(\"User account\")\ndata User {\n    id: int\n}\n";
+  const userSource = "domain demo.user\n@desc(\"User account\")\n@deprecated(\"Use Profile instead\")\ndata User {\n    id: int\n}\n";
   const orderSource = "domain demo.order\nimport demo.user\ndata Order {\nowner: user.User\n}\n";
   const problemSource = "domain demo.problem\ndata User {\n    first string\n    second:\n    third: string\n}\ndata User {}\n";
   const namingSource = "domain demo.naming\ndata user {}\n";
@@ -199,19 +199,35 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
       position: { line: 3, character: 12 },
       context: { triggerKind: 2, triggerCharacter: "." }
     });
-    assert.ok(completion.some((item) => item.label === "User"));
+    const userCompletion = completion.find((item) => item.label === "User");
+    assert.ok(userCompletion);
+    assert.deepEqual(userCompletion.tags, [1]);
+    assert.match(userCompletion.documentation, /Deprecated: Use Profile instead/);
+
+    const keywordCompletion = await peer.request("textDocument/completion", {
+      textDocument: { uri: orderURI },
+      position: { line: 2, character: 0 },
+      context: { triggerKind: 1 }
+    });
+    assert.ok(keywordCompletion.some((item) => item.label === "@deprecated"));
 
     const hover = await peer.request("textDocument/hover", {
       textDocument: { uri: orderURI },
       position: { line: 3, character: 13 }
     });
     assert.match(hover.contents.value, /User account/);
+    assert.match(hover.contents.value, /Deprecated: Use Profile instead/);
 
     const symbols = await peer.request("textDocument/documentSymbol", {
       textDocument: { uri: orderURI }
     });
     assert.equal(symbols[0].name, "Order");
     assert.equal(symbols[0].children[0].name, "owner");
+
+    const userSymbols = await peer.request("textDocument/documentSymbol", {
+      textDocument: { uri: pathToFileURL(userPath).href }
+    });
+    assert.deepEqual(userSymbols[0].tags, [1]);
 
     const workspaceSymbols = await peer.request("workspace/symbol", { query: "owner" });
     assert.equal(workspaceSymbols[0].name, "owner");
