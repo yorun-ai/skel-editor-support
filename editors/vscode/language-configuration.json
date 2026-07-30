@@ -50,7 +50,7 @@
   ],
   "folding": {
     "markers": {
-      "start": "^\\s*(pub\\s+)?(enum|data|config|actor|service|web|event|task)\\b.*\\{\\s*$",
+      "start": "^\\s*(pub\\s+)?(enum|data|config|actor|resource|service|web|event|task)\\b.*\\{\\s*$",
       "end": "^\\s*}\\s*$"
     }
   },

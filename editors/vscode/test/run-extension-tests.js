@@ -15,6 +15,7 @@ async function main() {
   const profilePath = fs.mkdtempSync(path.join(os.tmpdir(), "skel-vscode-test-"));
   try {
     await runTests({
+      version: process.env.VSCODE_VERSION || "stable",
       cachePath,
       extensionDevelopmentPath,
       extensionTestsPath,

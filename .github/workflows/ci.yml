@@ -31,12 +31,15 @@ jobs:
       - name: Validate editor support packages
         run: npm run check
 
+      - name: Read skelc compatibility
+        id: skelc-compatibility
+        run: echo "ref=$(node -p 'require(process.argv[1]).minimumVersion' './editors/vscode/skelc-compatibility.json')" >> "$GITHUB_OUTPUT"
+
       - name: Check out skelc
         uses: actions/checkout@v7
         with:
           repository: yorun-ai/skelc
-          # Use the dependent skelc PR until v0.10.1 is published.
-          ref: feat/deprecated-support
+          ref: ${{ steps.skelc-compatibility.outputs.ref }}
           path: .test/skelc
 
       - name: Set up Go
@@ -57,6 +60,7 @@ jobs:
       - name: Test Extension Host
         env:
           SKELC_PATH: ${{ runner.temp }}/skelc
+          VSCODE_VERSION: "1.91.0"
         run: xvfb-run -a npm run test:extension
 
   highlight-compatibility:
