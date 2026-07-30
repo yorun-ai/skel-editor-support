@@ -120,14 +120,17 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
   const orderPath = path.join(workspace, "order.skel");
   const problemPath = path.join(workspace, "problem.skel");
   const namingPath = path.join(workspace, "naming.skel");
+  const decoratorPath = path.join(workspace, "decorator.skel");
   const userSource = "domain demo.user\n@desc(\"User account\")\n@deprecated(\"Use Profile instead\")\ndata User {\n    id: int\n}\n";
   const orderSource = "domain demo.order\nimport demo.user\ndata Order {\nowner: user.User\n}\n";
   const problemSource = "domain demo.problem\ndata User {\n    first string\n    second:\n    third: string\n}\ndata User {}\n";
   const namingSource = "domain demo.naming\ndata user {}\n";
+  const decoratorSource = "domain demo.decorator\nconfig FeatureConfig instant {\n    @desc(\"Enabled\")\n    @\n    enabled: bool\n}\n";
   fs.writeFileSync(userPath, userSource);
   fs.writeFileSync(orderPath, orderSource);
   fs.writeFileSync(problemPath, problemSource);
   fs.writeFileSync(namingPath, namingSource);
+  fs.writeFileSync(decoratorPath, decoratorSource);
   const server = childProcess.spawn(process.env.SKELC_PATH, ["lsp"], {
     stdio: ["pipe", "pipe", "pipe"]
   });
@@ -145,7 +148,7 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
     });
     assert.equal(initialized.serverInfo.name, "skelc");
     assert.equal(initialized.capabilities.positionEncoding, "utf-16");
-    assert.deepEqual(initialized.capabilities.completionProvider.triggerCharacters, ["."]);
+    assert.deepEqual(initialized.capabilities.completionProvider.triggerCharacters, [".", "@"]);
     assert.equal(initialized.capabilities.hoverProvider, true);
     assert.equal(initialized.capabilities.documentFormattingProvider, true);
     assert.equal(initialized.capabilities.workspaceSymbolProvider, true);
@@ -209,7 +212,19 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
       position: { line: 2, character: 0 },
       context: { triggerKind: 1 }
     });
-    assert.ok(keywordCompletion.some((item) => item.label === "@deprecated"));
+    assert.ok(!keywordCompletion.some((item) => item.label === "@deprecated"));
+
+    const decoratorURI = pathToFileURL(decoratorPath).href;
+    peer.notify("textDocument/didOpen", {
+      textDocument: { uri: decoratorURI, languageId: "skel", version: 1, text: decoratorSource }
+    });
+    const decoratorCompletion = await peer.request("textDocument/completion", {
+      textDocument: { uri: decoratorURI },
+      position: { line: 3, character: 5 },
+      context: { triggerKind: 2, triggerCharacter: "@" }
+    });
+    assert.ok(decoratorCompletion.some((item) => item.label === "@example"));
+    assert.ok(!decoratorCompletion.some((item) => item.label === "@desc"));
 
     const hover = await peer.request("textDocument/hover", {
       textDocument: { uri: orderURI },

@@ -4,6 +4,22 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Context-aware decorator completion filtered by the following declaration,
+  block, field, or argument, with decorators already present omitted
+
+### Changed
+
+- Require skelc v0.10.3 or newer for language-server support
+
+### Fixed
+
+- Scope workspace semantic diagnostics to one source directory so independent
+  same-named domains do not report duplicate declarations
+- Match `skelc check` by leaving imports unresolved during live editor
+  diagnostics
+
 ## [0.10.0] - 2026-07-30
 
 ### Added

@@ -12,7 +12,7 @@ VS Code language support for [Skeleton (Skel)](https://github.com/yorun-ai/skelc
 
 - TextMate syntax highlighting for Skel declarations, types, decorators, comments, and strings
 - Recoverable syntax and workspace semantic diagnostics, including multiple diagnostics and related locations
-- Diagnostic quick fixes, formatting, completion, hover details, and hierarchical symbols from `skelc lsp`
+- Diagnostic quick fixes, formatting, context-aware decorator completion, hover details, and hierarchical symbols from `skelc lsp`
 - Go to Definition and Find All References across workspace Skel files
 - Workspace symbol search and top-level declaration rename
 - Best-effort navigation while the current document contains a syntax error
@@ -30,7 +30,7 @@ skelc version --output-format json
 
 Install the `Skeleton DSL Support` extension from the VS Code Marketplace, then open a `.skel` file. The extension starts `skelc lsp` from `PATH`.
 
-The extension supports VS Code 1.91 or newer and requires `skelc v0.10.2` or newer. The language server reports syntax and workspace semantic diagnostics while you edit; use `skelc check` for the same validation in terminals and CI. Deprecated declarations and elements are identified in completion, hover, and symbol views.
+The extension supports VS Code 1.91 or newer and requires `skelc v0.10.3` or newer. The language server reports syntax and source-directory-scoped semantic diagnostics while you edit; use `skelc check` for the same validation in terminals and CI. Decorator completion is filtered by the following target and omits decorators already present on it. Deprecated declarations and elements are identified in completion, hover, and symbol views.
 
 ## Configuration
 
@@ -54,7 +54,7 @@ Untitled Skel documents receive language-server support. Virtual and untrusted w
 
 If the server does not start:
 
-1. Run `skelc version --output-format json` in the same environment as the VS Code extension host and confirm the version is v0.10.2 or newer.
+1. Run `skelc version --output-format json` in the same environment as the VS Code extension host and confirm the version is v0.10.3 or newer.
 2. Set `skelc.path` to the executable's absolute path when it is not on `PATH`.
 3. Run `Skel: Restart Language Server`.
 4. Run `Skel: Show Language Server Output` and set `skelc.trace.server` to `messages` or `verbose` when protocol details are needed.
