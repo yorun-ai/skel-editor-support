@@ -4,6 +4,8 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-07-30
+
 ### Added
 
 - Deprecated declaration and element presentation from `skelc lsp`
