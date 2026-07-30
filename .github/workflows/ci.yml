@@ -110,7 +110,7 @@ jobs:
         run: npm run check --workspace @yorun-ai/skel-highlight
 
   ci-checks:
-    name: CI / Checks
+    name: CI / Required Checks
     if: ${{ always() }}
     needs: [check, highlight-compatibility]
     runs-on: ubuntu-latest
