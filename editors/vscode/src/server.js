@@ -1,9 +1,10 @@
 "use strict";
 
 const childProcess = require("child_process");
+const compatibility = require("../skelc-compatibility.json");
 
 const defaultCommand = "skelc";
-const minimumVersion = "v0.10.1";
+const minimumVersion = compatibility.minimumVersion;
 
 function normalizeCommand(value) {
   if (typeof value !== "string" || value.trim() === "") {

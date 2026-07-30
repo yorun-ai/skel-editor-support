@@ -21,7 +21,7 @@ test("verifyServer checks the skelc version", async () => {
   let invocation;
   const execFile = (command, args, options, callback) => {
     invocation = { command, args, options };
-    callback(null, JSON.stringify({ version: "v0.10.1" }), "");
+    callback(null, JSON.stringify({ version: server.minimumVersion }), "");
   };
 
   await assert.doesNotReject(server.verifyServer("/opt/bin/skelc", execFile));
@@ -31,7 +31,7 @@ test("verifyServer checks the skelc version", async () => {
 });
 
 test("verifyServer accepts development and newer builds", async () => {
-  for (const version of ["v0.0.0-dev", "v0.10.1", "v0.11.0", "v1.0.0"]) {
+  for (const version of ["v0.0.0-dev", server.minimumVersion, "v99.0.0"]) {
     const execFile = (_command, _args, _options, callback) => {
       callback(null, JSON.stringify({ version }), "");
     };
@@ -41,8 +41,8 @@ test("verifyServer accepts development and newer builds", async () => {
 
 test("verifyServer rejects unsupported and invalid versions", async () => {
   for (const [stdout, message] of [
-    [JSON.stringify({ version: "v0.10.0" }), /v0\.10\.1 or newer is required/],
-    [JSON.stringify({ version: "v0.10.1-rc.1" }), /v0\.10\.1 or newer is required/],
+    [JSON.stringify({ version: "v0.0.1" }), /or newer is required/],
+    [JSON.stringify({ version: `${server.minimumVersion}-rc.1` }), /or newer is required/],
     [JSON.stringify({}), /version unknown is unsupported/],
     ["not json", /Cannot read skelc version/]
   ]) {

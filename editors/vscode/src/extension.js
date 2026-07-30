@@ -9,6 +9,7 @@ const showOutputCommand = "skel.showLanguageServerOutput";
 const installURL = "https://github.com/yorun-ai/skelc#install";
 
 let client;
+let fileEvents;
 let lifecycle = Promise.resolve();
 
 function configuredCommand() {
@@ -27,7 +28,7 @@ function createClient(command) {
         { language: "skel", scheme: "vscode-remote" }
       ],
       synchronize: {
-        fileEvents: vscode.workspace.createFileSystemWatcher("**/*.skel")
+        fileEvents
       }
     }
   );
@@ -86,7 +87,9 @@ function restartClient() {
 }
 
 async function activate(context) {
+  fileEvents = vscode.workspace.createFileSystemWatcher("**/*.skel");
   context.subscriptions.push(
+    fileEvents,
     vscode.commands.registerCommand(restartCommand, restartClient),
     vscode.commands.registerCommand(showOutputCommand, () => {
       if (client) {
@@ -106,6 +109,7 @@ async function activate(context) {
 
 async function deactivate() {
   await serialize(stopClient);
+  fileEvents = undefined;
 }
 
 module.exports = { activate, deactivate };
