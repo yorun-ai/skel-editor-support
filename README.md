@@ -27,7 +27,7 @@ See the [package README](packages/highlight) for installation and registration e
 
 ## Visual Studio Code
 
-The [Skeleton VS Code extension](editors/vscode) provides syntax highlighting, a color theme, recoverable syntax and workspace semantic diagnostics, quick fixes, formatting, completion, hover details, hierarchical symbols, definitions, references, and top-level declaration rename through `skelc lsp`. Its Marketplace identity is `yorun.skeleton`.
+The [Skeleton VS Code extension](editors/vscode) provides syntax highlighting, a color theme, recoverable syntax and source-directory-scoped semantic diagnostics, quick fixes, formatting, context-aware decorator completion, hover details, hierarchical symbols, definitions, references, and top-level declaration rename through `skelc lsp`. Its Marketplace identity is `yorun.skeleton`.
 
 ## Development
 
