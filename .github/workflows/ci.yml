@@ -33,33 +33,59 @@ jobs:
 
       - name: Read skelc compatibility
         id: skelc-compatibility
-        run: echo "ref=$(node -p 'require(process.argv[1]).minimumVersion' './editors/vscode/skelc-compatibility.json')" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "minimum=$(node -p 'require(process.argv[1]).minimumVersion' './editors/vscode/skelc-compatibility.json')" >> "$GITHUB_OUTPUT"
+          echo "latest=$(node -p 'require(process.argv[1]).latestTestedVersion' './editors/vscode/skelc-compatibility.json')" >> "$GITHUB_OUTPUT"
 
-      - name: Check out skelc
+      - name: Check out minimum supported skelc
         uses: actions/checkout@v7
         with:
           repository: yorun-ai/skelc
-          ref: ${{ steps.skelc-compatibility.outputs.ref }}
-          path: .test/skelc
+          ref: ${{ steps.skelc-compatibility.outputs.minimum }}
+          path: .test/skelc-minimum
+
+      - name: Check out latest tested skelc
+        uses: actions/checkout@v7
+        with:
+          repository: yorun-ai/skelc
+          ref: ${{ steps.skelc-compatibility.outputs.latest }}
+          path: .test/skelc-latest
 
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version-file: .test/skelc/go.mod
-          cache-dependency-path: .test/skelc/go.sum
+          go-version-file: .test/skelc-latest/go.mod
+          cache-dependency-path: |
+            .test/skelc-minimum/go.sum
+            .test/skelc-latest/go.sum
 
-      - name: Build skelc language server
-        working-directory: .test/skelc
-        run: GOWORK=off go build -o "$RUNNER_TEMP/skelc" ./cmd/skelc
+      - name: Build minimum supported skelc language server
+        working-directory: .test/skelc-minimum
+        run: GOWORK=off go build -o "$RUNNER_TEMP/skelc-minimum" ./cmd/skelc
 
-      - name: Test LSP integration
+      - name: Build latest tested skelc language server
+        working-directory: .test/skelc-latest
+        run: GOWORK=off go build -o "$RUNNER_TEMP/skelc-latest" ./cmd/skelc
+
+      - name: Test minimum supported skelc LSP integration
         env:
-          SKELC_PATH: ${{ runner.temp }}/skelc
+          SKELC_PATH: ${{ runner.temp }}/skelc-minimum
         run: npm run test:integration
 
-      - name: Test Extension Host
+      - name: Test latest skelc LSP integration
         env:
-          SKELC_PATH: ${{ runner.temp }}/skelc
+          SKELC_PATH: ${{ runner.temp }}/skelc-latest
+        run: npm run test:integration
+
+      - name: Test minimum supported skelc in Extension Host
+        env:
+          SKELC_PATH: ${{ runner.temp }}/skelc-minimum
+          VSCODE_VERSION: "1.91.0"
+        run: xvfb-run -a npm run test:extension
+
+      - name: Test latest skelc in Extension Host
+        env:
+          SKELC_PATH: ${{ runner.temp }}/skelc-latest
           VSCODE_VERSION: "1.91.0"
         run: xvfb-run -a npm run test:extension
 
@@ -101,7 +127,7 @@ jobs:
           @wooorm/starry-night@^3
           highlight.js@^11
           lowlight@^3
-          monaco-editor@^0.56
+          monaco-editor@0.56.0
           prismjs@^1
           refractor@^5
           shiki@^4

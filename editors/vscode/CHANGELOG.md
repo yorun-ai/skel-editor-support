@@ -4,6 +4,14 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ## [Unreleased]
 
+## [0.10.2] - 2026-08-13
+
+### Changed
+
+- Refresh the Marketplace icon to the current Skel brand mark
+
+## [0.10.1] - 2026-07-30
+
 ### Added
 
 - Context-aware decorator completion filtered by the following declaration,

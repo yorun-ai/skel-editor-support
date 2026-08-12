@@ -66,7 +66,10 @@ For the real Visual Studio Code Extension Host test, run:
 SKELC_PATH=/absolute/path/to/skelc npm run test:extension
 ```
 
-The Extension Host test downloads a compatible VS Code test runtime on first use.
+The local Extension Host test reuses an installed VS Code by default. Set
+`VSCODE_EXECUTABLE_PATH` for a non-standard installation. Local tests never
+download VS Code implicitly; `VSCODE_VERSION` explicitly opts into the managed
+runtime download used by CI.
 
 Before submitting a pull request, also run:
 
