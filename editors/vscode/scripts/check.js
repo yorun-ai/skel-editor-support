@@ -24,6 +24,9 @@ const languageClientManifest = JSON.parse(fs.readFileSync(path.join(workspaceRoo
 if (!/^v\d+\.\d+\.\d+$/.test(compatibility.minimumVersion)) {
   throw new Error(`invalid minimum skelc version: ${compatibility.minimumVersion}`);
 }
+if (!/^v\d+\.\d+\.\d+$/.test(compatibility.latestTestedVersion)) {
+  throw new Error(`invalid latest tested skelc version: ${compatibility.latestTestedVersion}`);
+}
 if (manifest.engines.vscode !== languageClientManifest.engines.vscode) {
   throw new Error(`VS Code engine differs from vscode-languageclient: extension=${manifest.engines.vscode}, client=${languageClientManifest.engines.vscode}`);
 }

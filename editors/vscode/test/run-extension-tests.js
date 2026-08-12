@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { runTests } = require("@vscode/test-electron");
+const { resolveVSCodeRuntime } = require("./vscode-runtime");
 
 async function main() {
   if (!process.env.SKELC_PATH) {
@@ -12,10 +13,12 @@ async function main() {
   const extensionDevelopmentPath = path.resolve(__dirname, "..");
   const extensionTestsPath = path.resolve(__dirname, "suite", "index.js");
   const cachePath = path.resolve(__dirname, "..", "..", "..", ".vscode-test");
+  const runtime = resolveVSCodeRuntime();
+  console.log(`Using ${runtime.description}`);
   const profilePath = fs.mkdtempSync(path.join(os.tmpdir(), "skel-vscode-test-"));
   try {
     await runTests({
-      version: process.env.VSCODE_VERSION || "stable",
+      ...runtime.options,
       cachePath,
       extensionDevelopmentPath,
       extensionTestsPath,

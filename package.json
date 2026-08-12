@@ -17,5 +17,10 @@
     "test": "npm test --workspaces --if-present",
     "test:integration": "npm run test:integration --workspace skeleton",
     "test:extension": "npm run test:extension --workspace skeleton"
+  },
+  "overrides": {
+    "monaco-editor@0.56.0": {
+      "dompurify": "3.4.13"
+    }
   }
 }

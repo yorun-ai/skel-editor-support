@@ -77,6 +77,11 @@ SKELC_PATH=/absolute/path/to/skelc npm run test:integration
 SKELC_PATH=/absolute/path/to/skelc npm run test:extension
 ```
 
+Local Extension Host tests reuse an installed VS Code and do not download a
+test runtime. Set `VSCODE_EXECUTABLE_PATH` when VS Code is installed in a
+non-standard location. CI may set `VSCODE_VERSION` to opt into a managed,
+versioned test runtime.
+
 ## License
 
 Skel for Visual Studio Code is open source under the [Apache License 2.0](https://github.com/yorun-ai/skel-editor-support/blob/main/LICENSE).
