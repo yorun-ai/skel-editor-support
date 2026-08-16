@@ -37,18 +37,38 @@ jobs:
           echo "minimum=$(node -p 'require(process.argv[1]).minimumVersion' './editors/vscode/skelc-compatibility.json')" >> "$GITHUB_OUTPUT"
           echo "latest=$(node -p 'require(process.argv[1]).latestTestedVersion' './editors/vscode/skelc-compatibility.json')" >> "$GITHUB_OUTPUT"
 
+      - name: Resolve skelc source refs
+        id: skelc-source
+        env:
+          MINIMUM_VERSION: ${{ steps.skelc-compatibility.outputs.minimum }}
+          LATEST_VERSION: ${{ steps.skelc-compatibility.outputs.latest }}
+        run: |
+          resolve_ref() {
+            name="$1"
+            version="$2"
+            if git ls-remote --exit-code --tags https://github.com/yorun-ai/skelc.git "refs/tags/$version" >/dev/null; then
+              echo "${name}_ref=$version" >> "$GITHUB_OUTPUT"
+              echo "${name}_ldflags=" >> "$GITHUB_OUTPUT"
+            else
+              echo "${name}_ref=main" >> "$GITHUB_OUTPUT"
+              echo "${name}_ldflags=-X go.yorun.ai/skelc/internal/cli.ldModuleVersion=v0.0.0-dev" >> "$GITHUB_OUTPUT"
+            fi
+          }
+          resolve_ref minimum "$MINIMUM_VERSION"
+          resolve_ref latest "$LATEST_VERSION"
+
       - name: Check out minimum supported skelc
         uses: actions/checkout@v7
         with:
           repository: yorun-ai/skelc
-          ref: ${{ steps.skelc-compatibility.outputs.minimum }}
+          ref: ${{ steps.skelc-source.outputs.minimum_ref }}
           path: .test/skelc-minimum
 
       - name: Check out latest tested skelc
         uses: actions/checkout@v7
         with:
           repository: yorun-ai/skelc
-          ref: ${{ steps.skelc-compatibility.outputs.latest }}
+          ref: ${{ steps.skelc-source.outputs.latest_ref }}
           path: .test/skelc-latest
 
       - name: Set up Go
@@ -61,11 +81,15 @@ jobs:
 
       - name: Build minimum supported skelc language server
         working-directory: .test/skelc-minimum
-        run: GOWORK=off go build -o "$RUNNER_TEMP/skelc-minimum" ./cmd/skelc
+        env:
+          SKELC_LDFLAGS: ${{ steps.skelc-source.outputs.minimum_ldflags }}
+        run: GOWORK=off go build -ldflags "$SKELC_LDFLAGS" -o "$RUNNER_TEMP/skelc-minimum" ./cmd/skelc
 
       - name: Build latest tested skelc language server
         working-directory: .test/skelc-latest
-        run: GOWORK=off go build -o "$RUNNER_TEMP/skelc-latest" ./cmd/skelc
+        env:
+          SKELC_LDFLAGS: ${{ steps.skelc-source.outputs.latest_ldflags }}
+        run: GOWORK=off go build -ldflags "$SKELC_LDFLAGS" -o "$RUNNER_TEMP/skelc-latest" ./cmd/skelc
 
       - name: Test minimum supported skelc LSP integration
         env:
