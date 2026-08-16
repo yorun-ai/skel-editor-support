@@ -4,6 +4,19 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Live `BREAKING` and `DANGEROUS` schema compatibility diagnostics against Git
+  `HEAD` or an explicit source baseline
+- Schema compatibility CodeLens and command with a complete formatted JSON diff
+  report for the current in-memory domain
+- Settings for compatibility diagnostics, compatible-change hints, CodeLens,
+  and an explicit baseline path
+
+### Changed
+
+- Require skelc v0.13.0 or newer for schema compatibility protocol support
+
 ## [0.10.2] - 2026-08-13
 
 ### Changed

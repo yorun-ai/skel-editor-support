@@ -2,6 +2,7 @@
 
 const vscode = require("vscode");
 const { LanguageClient } = require("vscode-languageclient/node");
+const compatibility = require("./compatibility");
 const server = require("./server");
 
 const restartCommand = "skel.restartLanguageServer";
@@ -10,10 +11,16 @@ const installURL = "https://github.com/yorun-ai/skelc#install";
 
 let client;
 let fileEvents;
+let compatibilityReportContent = "{}\n";
+let compatibilityReportEmitter;
 let lifecycle = Promise.resolve();
 
 function configuredCommand() {
   return server.normalizeCommand(vscode.workspace.getConfiguration("skelc").get("path"));
+}
+
+function compatibilitySettings() {
+  return compatibility.settings(vscode.workspace.getConfiguration("skelc.schemaCompatibility"));
 }
 
 function createClient(command) {
@@ -29,6 +36,9 @@ function createClient(command) {
       ],
       synchronize: {
         fileEvents
+      },
+      initializationOptions: {
+        schemaCompatibility: compatibilitySettings()
       }
     }
   );
@@ -86,11 +96,55 @@ function restartClient() {
   });
 }
 
+async function showSchemaCompatibility(target) {
+  if (!client) {
+    void vscode.window.showErrorMessage("The Skel language server is not running.");
+    return;
+  }
+  let documentURI = typeof target === "string" ? target : undefined;
+  if (!documentURI && target && typeof target.toString === "function") {
+    documentURI = target.toString();
+  }
+  if (!documentURI && vscode.window.activeTextEditor?.document.languageId === "skel") {
+    documentURI = vscode.window.activeTextEditor.document.uri.toString();
+  }
+  if (!documentURI) {
+    void vscode.window.showErrorMessage("Open a Skel document before checking schema compatibility.");
+    return;
+  }
+  try {
+    const report = await client.sendRequest("workspace/executeCommand", {
+      command: compatibility.executeCommand,
+      arguments: [documentURI]
+    });
+    const reportURI = vscode.Uri.from(compatibility.reportDocument);
+    compatibilityReportContent = compatibility.reportContent(report);
+    compatibilityReportEmitter.fire(reportURI);
+    let document = await vscode.workspace.openTextDocument(reportURI);
+    if (document.languageId !== "json") {
+      document = await vscode.languages.setTextDocumentLanguage(document, "json");
+    }
+    await vscode.window.showTextDocument(document, { preview: true, preserveFocus: false });
+    void vscode.window.showInformationMessage(`Skel schema compatibility: ${compatibility.summary(report)}.`);
+    return document;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    void vscode.window.showErrorMessage(`Cannot check Skel schema compatibility: ${message}`);
+  }
+}
+
 async function activate(context) {
   fileEvents = vscode.workspace.createFileSystemWatcher("**/*.skel");
+  compatibilityReportEmitter = new vscode.EventEmitter();
   context.subscriptions.push(
     fileEvents,
+    compatibilityReportEmitter,
+    vscode.workspace.registerTextDocumentContentProvider(compatibility.reportDocument.scheme, {
+      onDidChange: compatibilityReportEmitter.event,
+      provideTextDocumentContent: () => compatibilityReportContent
+    }),
     vscode.commands.registerCommand(restartCommand, restartClient),
+    vscode.commands.registerCommand(compatibility.showCommand, showSchemaCompatibility),
     vscode.commands.registerCommand(showOutputCommand, () => {
       if (client) {
         client.outputChannel.show(true);
@@ -102,6 +156,11 @@ async function activate(context) {
       if (event.affectsConfiguration("skelc.path")) {
         void restartClient();
       }
+      if (event.affectsConfiguration("skelc.schemaCompatibility") && client) {
+        void client.sendNotification("workspace/didChangeConfiguration", {
+          settings: { schemaCompatibility: compatibilitySettings() }
+        });
+      }
     })
   );
   await serialize(startClient);
@@ -110,6 +169,8 @@ async function activate(context) {
 async function deactivate() {
   await serialize(stopClient);
   fileEvents = undefined;
+  compatibilityReportEmitter = undefined;
+  compatibilityReportContent = "{}\n";
 }
 
 module.exports = { activate, deactivate };

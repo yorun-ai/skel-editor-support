@@ -131,6 +131,11 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
   fs.writeFileSync(problemPath, problemSource);
   fs.writeFileSync(namingPath, namingSource);
   fs.writeFileSync(decoratorPath, decoratorSource);
+  childProcess.execFileSync("git", ["-C", workspace, "init"]);
+  childProcess.execFileSync("git", ["-C", workspace, "config", "user.name", "Skel Test"]);
+  childProcess.execFileSync("git", ["-C", workspace, "config", "user.email", "skel@example.com"]);
+  childProcess.execFileSync("git", ["-C", workspace, "add", "."]);
+  childProcess.execFileSync("git", ["-C", workspace, "commit", "-m", "baseline"]);
   const server = childProcess.spawn(process.env.SKELC_PATH, ["lsp"], {
     stdio: ["pipe", "pipe", "pipe"]
   });
@@ -144,6 +149,14 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
       processId: process.pid,
       rootUri: rootURI,
       workspaceFolders: [{ uri: rootURI, name: "test" }],
+      initializationOptions: {
+        schemaCompatibility: {
+          diagnostics: true,
+          includeCompatible: false,
+          codeLens: true,
+          baseline: ""
+        }
+      },
       capabilities: {}
     });
     assert.equal(initialized.serverInfo.name, "skelc");
@@ -154,6 +167,8 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
     assert.equal(initialized.capabilities.workspaceSymbolProvider, true);
     assert.equal(initialized.capabilities.renameProvider.prepareProvider, true);
     assert.equal(initialized.capabilities.codeActionProvider, true);
+    assert.equal(initialized.capabilities.codeLensProvider.resolveProvider, false);
+    assert.deepEqual(initialized.capabilities.executeCommandProvider.commands, ["skel.schema.diff"]);
 
     const problemURI = pathToFileURL(problemPath).href;
     const namingURI = pathToFileURL(namingPath).href;
@@ -243,6 +258,55 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
       textDocument: { uri: pathToFileURL(userPath).href }
     });
     assert.deepEqual(userSymbols[0].tags, [1]);
+
+    const codeLenses = await peer.request("textDocument/codeLens", {
+      textDocument: { uri: pathToFileURL(userPath).href }
+    });
+    assert.equal(codeLenses.length, 1);
+    assert.equal(codeLenses[0].command.command, "skel.showSchemaCompatibility");
+
+    const changedUserSource = userSource.replace("id: int", "id: string");
+    const compatibilityDiagnosticPromise = peer.waitForNotification(
+      "textDocument/publishDiagnostics",
+      (params) => params.uri === pathToFileURL(userPath).href &&
+        params.diagnostics.some((diagnostic) => diagnostic.code === "schema.data.member.type.changed")
+    );
+    peer.notify("textDocument/didOpen", {
+      textDocument: {
+        uri: pathToFileURL(userPath).href,
+        languageId: "skel",
+        version: 2,
+        text: changedUserSource
+      }
+    });
+    const compatibilityDiagnostics = (await compatibilityDiagnosticPromise).diagnostics;
+    const compatibilityDiagnostic = compatibilityDiagnostics.find(
+      (diagnostic) => diagnostic.code === "schema.data.member.type.changed"
+    );
+    assert.equal(compatibilityDiagnostic.severity, 2);
+    assert.equal(compatibilityDiagnostic.data.impact, "BREAKING");
+
+    const compatibilityReport = await peer.request("workspace/executeCommand", {
+      command: "skel.schema.diff",
+      arguments: [pathToFileURL(userPath).href]
+    });
+    assert.equal(compatibilityReport.compatible, false);
+    assert.equal(compatibilityReport.changes[0].code, "data.member.type.changed");
+
+    peer.notify("workspace/didChangeConfiguration", {
+      settings: {
+        schemaCompatibility: {
+          diagnostics: true,
+          includeCompatible: false,
+          codeLens: false,
+          baseline: ""
+        }
+      }
+    });
+    const disabledCodeLenses = await peer.request("textDocument/codeLens", {
+      textDocument: { uri: pathToFileURL(userPath).href }
+    });
+    assert.deepEqual(disabledCodeLenses, []);
 
     const workspaceSymbols = await peer.request("workspace/symbol", { query: "owner" });
     assert.equal(workspaceSymbols[0].name, "owner");

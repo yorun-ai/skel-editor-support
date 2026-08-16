@@ -93,6 +93,12 @@
         "command": "skel.showLanguageServerOutput",
         "title": "Show Language Server Output",
         "category": "Skel"
+      },
+      {
+        "command": "skel.showSchemaCompatibility",
+        "title": "Check Schema Compatibility",
+        "category": "Skel",
+        "enablement": "editorLangId == skel"
       }
     ],
     "configuration": {
@@ -114,6 +120,30 @@
           "default": "off",
           "scope": "window",
           "description": "Trace communication between VS Code and the Skel language server."
+        },
+        "skelc.schemaCompatibility.diagnostics": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "description": "Continuously report BREAKING and DANGEROUS schema changes against the configured baseline."
+        },
+        "skelc.schemaCompatibility.includeCompatible": {
+          "type": "boolean",
+          "default": false,
+          "scope": "window",
+          "description": "Also publish COMPATIBLE schema changes as hint diagnostics."
+        },
+        "skelc.schemaCompatibility.codeLens": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "description": "Show a schema compatibility CodeLens above each Skel domain declaration."
+        },
+        "skelc.schemaCompatibility.baseline": {
+          "type": "string",
+          "default": "",
+          "scope": "window",
+          "description": "Explicit baseline Skel file or directory, resolved relative to the domain source directory. Leave empty to use the same directory at Git HEAD."
         }
       }
     }
