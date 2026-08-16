@@ -112,6 +112,19 @@ function waitForExit(process, timeout) {
   });
 }
 
+async function waitForCodeLenses(peer, documentURI, accept, timeout = 3000) {
+  const deadline = Date.now() + timeout;
+  let lenses = [];
+  while (Date.now() < deadline) {
+    lenses = await peer.request("textDocument/codeLens", { textDocument: { uri: documentURI } });
+    if (accept(lenses)) {
+      return lenses;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  throw new Error(`Timed out waiting for CodeLens state: ${JSON.stringify(lenses)}`);
+}
+
 test("skelc completes the LSP initialize and shutdown lifecycle", {
   skip: !process.env.SKELC_PATH
 }, async () => {
@@ -303,9 +316,11 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
         }
       }
     });
-    const disabledCodeLenses = await peer.request("textDocument/codeLens", {
-      textDocument: { uri: pathToFileURL(userPath).href }
-    });
+    const disabledCodeLenses = await waitForCodeLenses(
+      peer,
+      pathToFileURL(userPath).href,
+      (lenses) => lenses.length === 0
+    );
     assert.deepEqual(disabledCodeLenses, []);
 
     const workspaceSymbols = await peer.request("workspace/symbol", { query: "owner" });
