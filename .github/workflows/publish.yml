@@ -64,6 +64,12 @@ jobs:
         if: github.event_name == 'release'
         run: npm run check:release --workspace skeleton -- "${{ github.event.release.tag_name }}"
 
+      - name: Verify minimum compatible skelc is released
+        if: github.event_name == 'release'
+        run: |
+          minimum_version=$(node -p 'require(process.argv[1]).minimumVersion' './editors/vscode/skelc-compatibility.json')
+          git ls-remote --exit-code --tags https://github.com/yorun-ai/skelc.git "refs/tags/$minimum_version"
+
       - name: Verify release commit is on main
         if: github.event_name == 'release'
         run: |
@@ -129,6 +135,13 @@ jobs:
 
       - name: Validate package
         run: npm run check --workspace @yorun-ai/skel-highlight
+
+      - name: Verify minimum compatible skelc is released
+        env:
+          SKELC_COMPATIBILITY_FILE: ./editors/vscode/skelc-compatibility.json
+        run: |
+          minimum_version=$(node -p 'require(process.argv[1]).minimumVersion' "$SKELC_COMPATIBILITY_FILE")
+          git ls-remote --exit-code --tags https://github.com/yorun-ai/skelc.git "refs/tags/$minimum_version"
 
       - name: Verify release commit is on main
         run: |

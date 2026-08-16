@@ -4,6 +4,8 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-08-17
+
 ### Added
 
 - Live `BREAKING` and `DANGEROUS` schema compatibility diagnostics against Git
