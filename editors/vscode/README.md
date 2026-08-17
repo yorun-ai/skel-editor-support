@@ -26,12 +26,12 @@ Install `skelc` first:
 
 ```sh
 go install go.yorun.ai/skelc/cmd/skelc@latest
-skelc version --output-format json
+skelc version
 ```
 
 Install the `Skeleton DSL Support` extension from the VS Code Marketplace, then open a `.skel` file. The extension starts `skelc lsp` from `PATH`.
 
-The extension supports VS Code 1.91 or newer and requires `skelc v0.13.0` or newer. The language server reports syntax, source-directory-scoped semantic diagnostics, and schema compatibility changes while you edit; use `skelc check` and `skelc schema diff` for reproducible terminal and CI validation. Decorator completion is filtered by the following target and omits decorators already present on it. Deprecated declarations and elements are identified in completion, hover, and symbol views.
+The extension supports VS Code 1.91 or newer and requires `skelc v0.14.0` or newer. The language server reports syntax, source-directory-scoped semantic diagnostics, and schema compatibility changes while you edit; use `skelc check` and `skelc schema diff` for reproducible terminal and CI validation. Decorator completion is filtered by the following target and omits decorators already present on it. Deprecated declarations and elements are identified in completion, hover, and symbol views.
 
 ## Configuration
 
@@ -60,7 +60,7 @@ Untitled Skel documents receive language-server support. Virtual and untrusted w
 
 If the server does not start:
 
-1. Run `skelc version --output-format json` in the same environment as the VS Code extension host and confirm the version is v0.13.0 or newer.
+1. Run `skelc version` in the same environment as the VS Code extension host and confirm the version is v0.14.0 or newer.
 2. Set `skelc.path` to the executable's absolute path when it is not on `PATH`.
 3. Run `Skel: Restart Language Server`.
 4. Run `Skel: Show Language Server Output` and set `skelc.trace.server` to `messages` or `verbose` when protocol details are needed.

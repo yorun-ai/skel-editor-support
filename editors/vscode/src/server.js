@@ -23,7 +23,7 @@ function serverOptions(command) {
 function verifyServer(command, execFile = childProcess.execFile) {
   const executable = normalizeCommand(command);
   return new Promise((resolve, reject) => {
-    execFile(executable, ["version", "--output-format", "json"], { timeout: 5000 }, (error, stdout) => {
+    execFile(executable, ["version"], { timeout: 5000 }, (error, stdout) => {
       if (error) {
         const reason = error.code === "ENOENT"
           ? "the executable was not found"
