@@ -26,7 +26,7 @@ test("verifyServer checks the skelc version", async () => {
 
   await assert.doesNotReject(server.verifyServer("/opt/bin/skelc", execFile));
   assert.equal(invocation.command, "/opt/bin/skelc");
-  assert.deepEqual(invocation.args, ["version", "--output-format", "json"]);
+  assert.deepEqual(invocation.args, ["version"]);
   assert.equal(invocation.options.timeout, 5000);
 });
 

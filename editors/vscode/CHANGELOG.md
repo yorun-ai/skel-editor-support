@@ -4,6 +4,10 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- Require skelc v0.14.0 and consume the default JSON `skelc version` result
+
 ## [0.11.0] - 2026-08-17
 
 ### Added
