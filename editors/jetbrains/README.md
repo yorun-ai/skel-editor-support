@@ -55,7 +55,7 @@ SKELC_PATH=/absolute/path/to/skelc \
 ./gradlew test -PlocalPlatformPath=/absolute/path/to/GoLand.app/Contents
 ```
 
-Without `SKELC_PATH`, real server integration is explicitly skipped; lexer, version policy, and IDE fixture tests still run. CI sets it and runs against the minimum supported skelc version. Relevant pull requests run the baseline tests; main-branch and manual CI runs also execute the full Plugin Verifier matrix. Release publishing always runs tests and the full matrix. Tests cover token restart boundaries, incomplete edits, shared fixtures, comment/bracket/quote behavior, LSP initialize/open/change/symbols/format/shutdown against the real server, and startup/restart/disable through the IDE LSP manager.
+Without `SKELC_PATH`, real server integration is explicitly skipped; lexer, version policy, and IDE fixture tests still run. CI sets it and runs against the minimum supported skelc version. PRs and main pushes run baseline tests only when JetBrains code or its shared inputs change. The full Plugin Verifier matrix runs only when explicitly requested with manual CI input `full=true`, or during publishing. Release publishing always runs tests and the full matrix. Tests cover token restart boundaries, incomplete edits, shared fixtures, comment/bracket/quote behavior, LSP initialize/open/change/symbols/format/shutdown against the real server, and startup/restart/disable through the IDE LSP manager.
 
 ## Packaging and publishing
 

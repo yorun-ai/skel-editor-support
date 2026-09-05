@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      full:
+        description: Run all tests and compatibility matrices
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -18,6 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       node: ${{ steps.scope.outputs.node }}
+      vscode_package: ${{ steps.scope.outputs.vscode_package }}
       vscode: ${{ steps.scope.outputs.vscode }}
       highlight: ${{ steps.scope.outputs.highlight }}
       jetbrains: ${{ steps.scope.outputs.jetbrains }}
@@ -35,13 +41,21 @@ jobs:
         id: scope
         env:
           CI_EVENT_NAME: ${{ github.event_name }}
+          FULL_CI: ${{ github.event_name == 'workflow_dispatch' && inputs.full }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          if [ "$CI_EVENT_NAME" = pull_request ]; then
-            git diff --name-only --no-renames -z "$BASE_SHA" "$HEAD_SHA" | node scripts/ci-scope.mjs
-          else
+          if [ "$FULL_CI" = true ]; then
             node scripts/ci-scope.mjs </dev/null
+          elif [ "$CI_EVENT_NAME" = pull_request ]; then
+            git diff --name-only --no-renames -z "$BASE_SHA...$HEAD_SHA" | node scripts/ci-scope.mjs
+          else
+            if [ "$CI_EVENT_NAME" = workflow_dispatch ]; then
+              BASE_SHA=$(git rev-parse --verify "$HEAD_SHA^" 2>/dev/null || git hash-object -w -t tree /dev/null)
+            elif [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = 0000000000000000000000000000000000000000 ]; then
+              BASE_SHA=$(git hash-object -w -t tree /dev/null)
+            fi
+            git diff --name-only --no-renames -z "$BASE_SHA" "$HEAD_SHA" | node scripts/ci-scope.mjs
           fi
 
   check:
@@ -56,7 +70,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run check
+      - name: Check VS Code package
+        if: needs.changes.outputs.vscode_package == 'true'
+        run: npm run check --workspace skeleton
+      - name: Check highlighter package
+        if: needs.changes.outputs.highlight == 'true'
+        run: npm run check --workspace @yorun-ai/skel-highlight
 
   vscode:
     name: VS Code integration
@@ -77,7 +96,7 @@ jobs:
         run: npm ci
 
       - name: Build editor support packages
-        run: npm run build
+        run: npm run build --workspace skeleton
 
       - name: Read skelc compatibility
         id: skelc-compatibility
@@ -103,7 +122,7 @@ jobs:
             fi
           }
           resolve_ref minimum "$MINIMUM_VERSION"
-          resolve_ref latest "$LATEST_VERSION"
+          if [ "${{ needs.changes.outputs.full }}" = true ]; then resolve_ref latest "$LATEST_VERSION"; fi
 
       - name: Check out minimum supported skelc
         uses: actions/checkout@v7
@@ -113,6 +132,7 @@ jobs:
           path: .test/skelc-minimum
 
       - name: Check out latest tested skelc
+        if: needs.changes.outputs.full == 'true'
         uses: actions/checkout@v7
         with:
           repository: yorun-ai/skelc
@@ -122,10 +142,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version-file: .test/skelc-latest/go.mod
-          cache-dependency-path: |
-            .test/skelc-minimum/go.sum
-            .test/skelc-latest/go.sum
+          go-version-file: ${{ needs.changes.outputs.full == 'true' && '.test/skelc-latest/go.mod' || '.test/skelc-minimum/go.mod' }}
+          cache-dependency-path: .test/skelc-minimum/go.sum
 
       - name: Build minimum supported skelc language server
         working-directory: .test/skelc-minimum
@@ -134,6 +152,7 @@ jobs:
         run: GOWORK=off go build -ldflags "$SKELC_LDFLAGS" -o "$RUNNER_TEMP/skelc-minimum" ./cmd/skelc
 
       - name: Build latest tested skelc language server
+        if: needs.changes.outputs.full == 'true'
         working-directory: .test/skelc-latest
         env:
           SKELC_LDFLAGS: ${{ steps.skelc-source.outputs.latest_ldflags }}
@@ -145,6 +164,7 @@ jobs:
         run: npm run test:integration
 
       - name: Test latest skelc LSP integration
+        if: needs.changes.outputs.full == 'true'
         env:
           SKELC_PATH: ${{ runner.temp }}/skelc-latest
         run: npm run test:integration
@@ -156,6 +176,7 @@ jobs:
         run: xvfb-run -a npm run test:extension
 
       - name: Test latest skelc in Extension Host
+        if: needs.changes.outputs.full == 'true'
         env:
           SKELC_PATH: ${{ runner.temp }}/skelc-latest
           VSCODE_VERSION: "1.91.0"
