@@ -72,3 +72,25 @@ test('release orchestration queries exact main CI and writes outputs only after 
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('workflow preflight rejects missing tokens and partial signing without revealing credentials', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { spawnSync } = await import('node:child_process');
+  const workflow = readFileSync('.github/workflows/publish.yml', 'utf8');
+  const shell = workflow.split('      - name: Check JetBrains publishing credentials')[1]
+    .split('        run: |\n')[1].split('      - uses:')[0]
+    .split('\n').map(line => line.slice(10)).join('\n');
+  for (const [token, certificate, key, success] of [
+    ['', '', '', false], [' \n', '', '', false],
+    ['fixture-token', '', '', true], ['fixture-token', ' \n', '\t', true],
+    ['fixture-token', 'fixture-cert', 'fixture-key', true],
+    ['fixture-token', 'fixture-cert', '', false], ['fixture-token', '', 'fixture-key', false],
+  ]) {
+    const result = spawnSync('bash', ['-eo', 'pipefail', '-c', shell], {
+      encoding: 'utf8', env: { ...process.env, JETBRAINS_MARKETPLACE_TOKEN: token,
+        JETBRAINS_CERTIFICATE_CHAIN: certificate, JETBRAINS_PRIVATE_KEY: key },
+    });
+    assert.equal(result.status === 0, success, result.stderr);
+    assert.doesNotMatch(result.stdout + result.stderr, /fixture-(token|cert|key)/);
+  }
+});

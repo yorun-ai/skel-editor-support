@@ -13,11 +13,15 @@ This repository follows Vine's event lifecycle, with editor checks selected by c
 
 ## CI selection
 
-See [the changed-file table](../CONTRIBUTING.md#ci-scope). Documentation, workflow and unrelated changes run lightweight policy tests, without starting application suites. No workflow-level path filter is used: `CI / Required Checks` must always report a result.
+See [the changed-file table](../CONTRIBUTING.md#ci-scope). Documentation and unrelated changes run lightweight policy tests. Workflow YAML and actionlint configuration changes also run actionlint, without starting application suites. The required gate checks this optional lint job as well. No workflow-level path filter is used: `CI / Required Checks` must always report a result.
 
 PRs test the minimum skelc version and baseline JetBrains platform. On main, selected VS Code changes additionally test the latest configured skelc; selected highlighter changes run the Node/peer matrix; selected JetBrains changes run Plugin Verifier. Unselected components remain skipped, including on main. Full manual CI deliberately selects all components.
 
 Superseded PR runs are cancelled. Main runs are isolated by commit SHA and never cancelled by a later merge, so a release candidate retains its CI result. The required gate rejects failures, cancellations and unexpected skips.
+
+Jobs have explicit time limits: classification/gate 5 minutes, workflow lint 10, package/highlighter checks 15, VS Code integration 30, and JetBrains 60. Individual LSP tests are limited to 5 minutes, Extension Host tests to 10, Gradle tests to 15 and Plugin Verifier to 40. Publishing jobs have limits of 20 minutes for npm/VS Code and 60 for JetBrains, with a 10-minute upload/signing step.
+
+JetBrains CI runs `node --test scripts/jetbrains-signing.test.mjs` against the real Gradle configuration for unset, empty, complete and each partial signing configuration. It uses fake values and `gradlew help`, so it never signs or uploads an artifact.
 
 ## Publishing
 
@@ -26,6 +30,8 @@ Superseded PR runs are cancelled. Main runs are isolated by commit SHA and never
 3. Tag that commit with `vX.Y.Z` (excluding `v0.0.0`) and publish its GitHub Release.
 4. Publish validates the existing published Release, tag checkout, ancestry on main, dated VS Code changelog and released minimum skelc version. It requires the latest main-push `ci.yml` run for the exact SHA to have completed successfully. PR CI, another SHA, missing, pending, failed or cancelled CI cannot satisfy this gate.
 5. VS Code, npm and the enabled JetBrains channel run independently after validation, checking out the validated SHA. Package versions are injected only into temporary checkouts. Package checks and JetBrains release-artifact verification remain; server integration suites are not repeated during publication.
+
+Before checkout or SDK downloads, the JetBrains job checks that the token is non-empty and signing credentials are paired, without printing secret values. This preflight cannot establish token validity or permissions.
 
 Author signing is optional: the Marketplace token alone is sufficient. Configure both certificate and private key to sign; configuring only one is rejected.
 

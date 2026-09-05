@@ -107,8 +107,9 @@ PRs and pushes to main use the same changed-file rules. Every run reports `CI / 
 
 | Changed files | Automatic checks |
 | --- | --- |
-| Documentation, CI configuration, unrelated files | CI policy tests only |
-| JetBrains code/build inputs | Baseline Java 21 plugin tests |
+| Documentation and unrelated files | CI policy tests only |
+| Workflow YAML / actionlint configuration | CI policy tests and actionlint; no application suites |
+| JetBrains code/build inputs | Baseline Java 21 plugin tests and optional-signing regression checks |
 | VS Code runtime/configuration/tests | VS Code package checks and minimum skelc LSP/Extension Host tests |
 | VS Code assets/themes | VS Code package checks only |
 | Frontend highlighter adapters | Highlighter package checks only |

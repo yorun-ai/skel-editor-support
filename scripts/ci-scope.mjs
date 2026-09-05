@@ -2,10 +2,12 @@ import { readFileSync, appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 export function classifyChanges(paths, full = false) {
-  const scope = { node: full, vscode_package: full, vscode: full, highlight: full, jetbrains: full, full };
+  const scope = { node: full, vscode_package: full, vscode: full, highlight: full, jetbrains: full, workflow: full, full };
   for (const path of paths) {
     if (/\.md$/.test(path)) continue;
-    if (path.startsWith('editors/jetbrains/')) scope.jetbrains = true;
+    if (path.startsWith('.github/workflows/') || path === '.github/actionlint.yaml') scope.workflow = true;
+    else if (path === 'scripts/jetbrains-signing.test.mjs') scope.jetbrains = true;
+    else if (path.startsWith('editors/jetbrains/')) scope.jetbrains = true;
     else if (path === 'editors/vscode/skelc-compatibility.json') {
       scope.vscode_package = scope.vscode = scope.jetbrains = true;
     } else if (path.startsWith('editors/vscode/')) {
