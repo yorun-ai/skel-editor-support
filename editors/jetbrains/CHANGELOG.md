@@ -1,14 +1,18 @@
 # Changelog
 
-## Unreleased
+## [Unreleased]
 
-- Add the Skel Language Support plugin for IntelliJ Platform 2026.2.
-- Add local syntax highlighting, colors, comments, brackets and quotes.
-- Connect skelc LSP for diagnostics, completion, navigation, formatting and rename.
-- Add executable settings, version checks, schema diagnostic options and restart/status UI.
+## [0.11.2] - 2026-09-05
 
-## Unreleased
+### Added
 
-- Lower the minimum IDE version to 2025.2.1 and compile to Java 21 using the backward-compatible LSP API.
-- Allow newer IDE builds without a fixed upper bound; verify the baseline and 2026.2.2.
-- Run baseline plugin tests on affected PRs and the full IDE verification matrix on main, manual CI and releases.
+- Skel Language Support for IntelliJ Platform 2025.2.1 and newer, using Java 21.
+- Local syntax highlighting, configurable colors, comments, brackets and quotes.
+- skelc LSP integration for diagnostics, completion, navigation, formatting and supported rename capabilities.
+- Executable settings, version checks, schema diagnostic options and restart/status UI.
+- Automatic Marketplace publication with optional author signing.
+
+### Compatibility
+
+- Keep the backward-compatible LSP API and allow newer IDE builds without a fixed upper bound.
+- Verify GoLand and IntelliJ IDEA at 2025.2.1 and 2026.2.2.
