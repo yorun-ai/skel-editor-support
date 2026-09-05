@@ -159,10 +159,45 @@ jobs:
       - name: Validate syntax-highlighting consumers
         run: npm run check --workspace @yorun-ai/skel-highlight
 
+  jetbrains:
+    name: JetBrains plugin
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 25
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Read minimum supported skelc
+        id: compatibility
+        run: echo "version=$(node -p 'require("./editors/vscode/skelc-compatibility.json").minimumVersion')" >> "$GITHUB_OUTPUT"
+      - name: Check out minimum supported skelc
+        uses: actions/checkout@v7
+        with:
+          repository: yorun-ai/skelc
+          ref: ${{ steps.compatibility.outputs.version }}
+          path: .test/skelc-jetbrains
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: .test/skelc-jetbrains/go.mod
+          cache-dependency-path: .test/skelc-jetbrains/go.sum
+      - name: Build skelc
+        working-directory: .test/skelc-jetbrains
+        run: GOWORK=off go build -o "$RUNNER_TEMP/skelc" ./cmd/skelc
+      - name: Test and verify plugin
+        working-directory: editors/jetbrains
+        env:
+          SKELC_PATH: ${{ runner.temp }}/skelc
+        run: xvfb-run -a ./gradlew test verifyPlugin
+
   ci-checks:
     name: CI / Required Checks
     if: ${{ always() }}
-    needs: [check, highlight-compatibility]
+    needs: [check, highlight-compatibility, jetbrains]
     runs-on: ubuntu-latest
     steps:
       - name: Verify CI results

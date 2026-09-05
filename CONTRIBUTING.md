@@ -4,12 +4,13 @@ Thank you for contributing to the editor integrations and syntax-highlighting pa
 
 ## Repository Scope
 
-This repository contains two workspace packages:
+This repository contains two npm workspace packages and a Gradle plugin:
 
 - `packages/highlight` owns the canonical TextMate grammar and adapters for frontend highlighting libraries.
 - `editors/vscode` owns the Visual Studio Code extension, language configuration, theme, Marketplace metadata, and the client that starts `skelc lsp`.
+- `editors/jetbrains` owns the Kotlin IntelliJ Platform plugin and its Gradle validation and publishing.
 
-Keep the VS Code extension as a thin Language Server Protocol client. Parsing, semantic analysis, formatting, diagnostics, and other language intelligence belong in the independent [`yorun-ai/skelc`](https://github.com/yorun-ai/skelc) repository.
+Keep the editor clients as thin Language Server Protocol clients. Parsing, semantic analysis, formatting, diagnostics, and other language intelligence belong in the independent [`yorun-ai/skelc`](https://github.com/yorun-ai/skelc) repository.
 
 ## Prerequisites
 
@@ -78,6 +79,8 @@ git diff --check
 ```
 
 Add focused tests for changes to client startup, configuration, protocol behavior, grammar coverage, or highlighting adapters.
+
+For JetBrains changes, also follow [its development guide](editors/jetbrains/README.md) and run the Gradle tests with a real skelc executable. JVM tests are separate from `npm run check`; CI requires both.
 
 ## Versions and Release Artifacts
 
