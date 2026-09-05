@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -13,7 +14,54 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      node: ${{ steps.scope.outputs.node }}
+      vscode: ${{ steps.scope.outputs.vscode }}
+      highlight: ${{ steps.scope.outputs.highlight }}
+      jetbrains: ${{ steps.scope.outputs.jetbrains }}
+      full: ${{ steps.scope.outputs.full }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Test change classification
+        run: node --test scripts/ci-scope.test.mjs
+      - name: Select checks
+        id: scope
+        env:
+          CI_EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if [ "$CI_EVENT_NAME" = pull_request ]; then
+            git diff --name-only --no-renames -z "$BASE_SHA" "$HEAD_SHA" | node scripts/ci-scope.mjs
+          else
+            node scripts/ci-scope.mjs </dev/null
+          fi
+
   check:
+    name: Package checks
+    needs: changes
+    if: needs.changes.outputs.node == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+
+  vscode:
+    name: VS Code integration
+    needs: changes
+    if: needs.changes.outputs.vscode == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
@@ -28,8 +76,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Validate editor support packages
-        run: npm run check
+      - name: Build editor support packages
+        run: npm run build
 
       - name: Read skelc compatibility
         id: skelc-compatibility
@@ -114,6 +162,8 @@ jobs:
         run: xvfb-run -a npm run test:extension
 
   highlight-compatibility:
+    needs: changes
+    if: needs.changes.outputs.full == 'true'
     name: Highlight compatibility (Node ${{ matrix.node-version }}, ${{ matrix.peer-set }})
     runs-on: ubuntu-latest
     strategy:
@@ -160,6 +210,8 @@ jobs:
         run: npm run check --workspace @yorun-ai/skel-highlight
 
   jetbrains:
+    needs: changes
+    if: needs.changes.outputs.jetbrains == 'true'
     name: JetBrains plugin
     runs-on: ubuntu-latest
     steps:
@@ -170,7 +222,7 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 25
+          java-version: 21
       - uses: gradle/actions/setup-gradle@v4
       - name: Read minimum supported skelc
         id: compatibility
@@ -188,19 +240,30 @@ jobs:
       - name: Build skelc
         working-directory: .test/skelc-jetbrains
         run: GOWORK=off go build -o "$RUNNER_TEMP/skelc" ./cmd/skelc
-      - name: Test and verify plugin
+      - name: Test plugin
         working-directory: editors/jetbrains
         env:
           SKELC_PATH: ${{ runner.temp }}/skelc
-        run: xvfb-run -a ./gradlew test verifyPlugin
+        run: xvfb-run -a ./gradlew test
+      - name: Verify supported IDEs
+        if: needs.changes.outputs.full == 'true'
+        working-directory: editors/jetbrains
+        run: ./gradlew verifyPlugin
 
   ci-checks:
     name: CI / Required Checks
     if: ${{ always() }}
-    needs: [check, highlight-compatibility, jetbrains]
+    needs: [changes, check, vscode, highlight-compatibility, jetbrains]
     runs-on: ubuntu-latest
     steps:
       - name: Verify CI results
         env:
           NEEDS: ${{ toJSON(needs) }}
-        run: echo "$NEEDS" | jq --exit-status 'all(.[]; .result == "success")'
+        run: |
+          echo "$NEEDS" | jq --exit-status '
+            .changes.result == "success" and
+            (.changes.outputs as $scope |
+              (.check.result == (if $scope.node == "true" then "success" else "skipped" end)) and
+              (.vscode.result == (if $scope.vscode == "true" then "success" else "skipped" end)) and
+              (.jetbrains.result == (if $scope.jetbrains == "true" then "success" else "skipped" end)) and
+              (."highlight-compatibility".result == (if $scope.full == "true" then "success" else "skipped" end)))'

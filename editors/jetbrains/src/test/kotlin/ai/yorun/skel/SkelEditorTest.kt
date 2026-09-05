@@ -31,7 +31,7 @@ class SkelEditorTest : BasePlatformTestCase() {
     }
     fun testDescriptorUsesSkelLanguageAndSchemaOptions() {
         project.getService(SkelSettings::class.java).state.baseline = "schema.json"
-        val descriptor = SkelLspClientDescriptor(project)
+        val descriptor = SkelLspServerDescriptor(project)
         val file = myFixture.configureByText("example.skel", "domain example").virtualFile
         assertEquals("skel", descriptor.getLanguageId(file))
         val options = descriptor.createInitializationOptions() as Map<*, *>

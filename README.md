@@ -11,7 +11,7 @@ Editor integrations and syntax highlighting for the [Skel](https://github.com/yo
 | --- | --- |
 | [`@yorun-ai/skel-highlight`](packages/highlight) | Shared TextMate grammar and frontend highlighter integrations |
 | [`skeleton`](editors/vscode) | VS Code extension and `skelc lsp` client |
-| [Skel Language Support](editors/jetbrains) | JetBrains 2026.2 plugin and `skelc lsp` client |
+| [Skel Language Support](editors/jetbrains) | JetBrains 2025.2.1+ plugin and `skelc lsp` client |
 
 ## Syntax Highlighting
 
@@ -32,7 +32,7 @@ The [Skeleton VS Code extension](editors/vscode) provides syntax highlighting, a
 
 ## JetBrains
 
-The [JetBrains plugin](editors/jetbrains) provides basic Skel editing and integrates with `skelc lsp` for language intelligence on IDEs with the LSP module. It is a separate Gradle/Kotlin project requiring JDK 25. See its README for installation, tests, supported capabilities and Marketplace publishing.
+The [JetBrains plugin](editors/jetbrains) provides basic Skel editing and integrates with `skelc lsp` for language intelligence on IDEs with the LSP module. It is a separate Gradle/Kotlin project requiring JDK 21. See its README for installation, tests, supported capabilities and Marketplace publishing.
 
 ## Development
 

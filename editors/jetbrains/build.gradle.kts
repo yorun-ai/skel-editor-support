@@ -25,7 +25,7 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
 }
 
-kotlin { jvmToolchain(25) }
+kotlin { jvmToolchain(21) }
 
 val generateLanguageResources = tasks.register<Exec>("generateLanguageResources") {
     inputs.files("../../packages/highlight/src/language.js", "../vscode/skelc-compatibility.json")
@@ -39,7 +39,7 @@ sourceSets.test { resources.srcDir("../../packages/highlight/test/fixtures") }
 intellijPlatform {
     pluginConfiguration {
         name = "Skel Language Support"
-        ideaVersion { sinceBuild = "262"; untilBuild = "262.*" }
+        ideaVersion { sinceBuild = "252.25557.131"; untilBuild = provider { null } }
     }
     signing {
         certificateChain = providers.environmentVariable("JETBRAINS_CERTIFICATE_CHAIN")
@@ -54,6 +54,8 @@ intellijPlatform {
             else {
                 create("GO", providers.gradleProperty("platformVersion").get())
                 create("IU", providers.gradleProperty("platformVersion").get())
+                create("GO", "2026.2.2")
+                create("IU", "2026.2.2")
             }
         }
     }

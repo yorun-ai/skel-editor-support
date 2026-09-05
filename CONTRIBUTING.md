@@ -100,3 +100,9 @@ Keep pull requests focused and preserve repository boundaries. In the pull reque
 - Update the relevant README and changelog for user-visible behavior.
 
 Maintainers will review compatibility-sensitive changes to extension identity, settings, activation behavior, supported VS Code versions, grammar scopes, and the minimum supported skelc version as public interface changes.
+
+## CI scope
+
+Every pull request reports `CI / Required Checks`. Documentation-only PRs run the scope checks and skip application tests. JetBrains-only PRs run the Java 21 baseline plugin tests; VS Code changes run package checks and real server/Extension Host integration. Shared grammar changes cover both clients, and shared scripts, dependencies or workflow changes conservatively run all affected jobs.
+
+The expensive highlighter compatibility matrix and full JetBrains Plugin Verifier matrix run on pushes to main and manual CI runs. Publishing keeps its full validation. The required check validates each expected job and rejects failures, cancellations and unexpectedly skipped jobs. Update `scripts/ci-scope.mjs` and its tests when adding another component.
