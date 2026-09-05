@@ -6,6 +6,7 @@
         Language support for Skel, the open-source contract language for Yorun and Vine.
         Includes syntax highlighting, comments and bracket matching. Install skelc v0.14.0
         or newer for diagnostics, completion, documentation, navigation, formatting and rename.
+        Available language-server features depend on the IDE version.
         Configure its executable under Settings | Languages &amp; Frameworks | Skel.
         <a href="https://github.com/yorun-ai/skel-editor-support">Source and issue tracker</a>.
     ]]></description>

@@ -3,7 +3,7 @@ package ai.yorun.skel
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ui.UIUtil
@@ -27,29 +27,29 @@ class SkelLspPlatformTest : BasePlatformTestCase() {
         com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction(project) {
             com.intellij.testFramework.PsiTestUtil.addContentRoot(module, file.parent)
         }
-        assertTrue("Physical Skel file must be supported", SkelLspIntegrationProvider.supports(file))
+        assertTrue("Physical Skel file must be supported", SkelLspServerSupportProvider.supports(file))
         assertTrue("Fixture must be trusted", com.intellij.ide.trustedProjects.TrustedProjects.isProjectTrusted(project))
-        val manager = LspClientManager.getInstance(project)
-        val provider = SkelLspIntegrationProvider::class.java
+        val manager = LspServerManager.getInstance(project)
+        val provider = SkelLspServerSupportProvider::class.java
         try {
             FileEditorManager.getInstance(project).openFile(file, false)
-            manager.startClientsIfNeeded(provider)
+            manager.startServersIfNeeded(provider)
             await("registered client initialization") {
-                manager.getClients(provider).any { it.state == LspServerState.Running }
+                manager.getServersForProvider(provider).any { it.state == LspServerState.Running }
             }
-            val initial = manager.getClients(provider).first { it.state == LspServerState.Running }
+            val initial = manager.getServersForProvider(provider).first { it.state == LspServerState.Running }
             assertEquals("skel", initial.descriptor.getLanguageId(file))
             assertNotNull(initial.initializeResult?.capabilities?.completionProvider)
-            manager.stopAndRestartClientsIfNeeded(provider)
+            manager.stopAndRestartIfNeeded(provider)
             await("client restart") {
-                manager.getClients(provider).any { it !== initial && it.state == LspServerState.Running }
+                manager.getServersForProvider(provider).any { it !== initial && it.state == LspServerState.Running }
             }
             settings.state.enabled = false
-            manager.stopAndRestartClientsIfNeeded(provider)
-            await("disabled client stops") { manager.getClients(provider).none { it.state == LspServerState.Running } }
+            manager.stopAndRestartIfNeeded(provider)
+            await("disabled client stops") { manager.getServersForProvider(provider).none { it.state == LspServerState.Running } }
         } finally {
             settings.state.enabled = false
-            manager.stopClients(provider)
+            manager.stopServers(provider)
             FileEditorManager.getInstance(project).closeFile(file)
         }
     }

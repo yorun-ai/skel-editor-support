@@ -2,6 +2,16 @@ name: Publish
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing published release tag (vX.Y.Z)
+        required: true
+        type: string
+      artifacts:
+        description: Recover only the selected publication
+        type: choice
+        options: [all, vscode, npm, jetbrains]
+        default: all
   release:
     types: [published]
 
@@ -9,20 +19,59 @@ permissions:
   contents: read
 
 concurrency:
-  group: publish-${{ github.event.release.tag_name || github.ref }}
+  group: publish-${{ github.event.release.tag_name || inputs.tag }}
   cancel-in-progress: false
 
+env:
+  RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+
 jobs:
+  validate:
+    name: Validate published release and main CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      commit: ${{ steps.release.outputs.commit }}
+      vscode: ${{ steps.release.outputs.vscode }}
+      npm: ${{ steps.release.outputs.npm }}
+      jetbrains: ${{ steps.release.outputs.jetbrains }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: automation
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+          path: source
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Validate release
+        id: release
+        working-directory: source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACTS: ${{ inputs.artifacts || 'all' }}
+          JETBRAINS_ENABLED: ${{ vars.JETBRAINS_MARKETPLACE_ENABLED }}
+        run: node ../automation/scripts/release-policy.mjs
+
   marketplace:
     name: VS Code Marketplace
+    needs: validate
+    if: needs.validate.outputs.vscode == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: vscode-marketplace
     steps:
       - name: Check out release
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || github.ref }}
+          ref: ${{ needs.validate.outputs.commit }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -34,9 +83,8 @@ jobs:
         run: npm ci
 
       - name: Apply release version
-        if: github.event_name == 'release'
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
         run: |
           case "$RELEASE_TAG" in
             v*) ;;
@@ -53,7 +101,7 @@ jobs:
             --allow-same-version
 
       - name: Validate extension
-        run: npm run check
+        run: npm run check --workspace skeleton
 
       - name: Verify Marketplace credentials
         env:
@@ -61,39 +109,25 @@ jobs:
         run: npm run verify:marketplace --workspace skeleton
 
       - name: Validate release tag
-        if: github.event_name == 'release'
-        run: npm run check:release --workspace skeleton -- "${{ github.event.release.tag_name }}"
-
-      - name: Verify minimum compatible skelc is released
-        if: github.event_name == 'release'
-        run: |
-          minimum_version=$(node -p 'require(process.argv[1]).minimumVersion' './editors/vscode/skelc-compatibility.json')
-          git ls-remote --exit-code --tags https://github.com/yorun-ai/skelc.git "refs/tags/$minimum_version"
-
-      - name: Verify release commit is on main
-        if: github.event_name == 'release'
-        run: |
-          git fetch origin main
-          git merge-base --is-ancestor HEAD origin/main
+        run: npm run check:release --workspace skeleton -- "${{ env.RELEASE_TAG }}"
 
       - name: Create release directory
-        if: github.event_name == 'release'
         run: mkdir -p "$GITHUB_WORKSPACE/dist"
 
       - name: Package extension
-        if: github.event_name == 'release'
-        run: npm run package:vsix --workspace skeleton -- --out "$GITHUB_WORKSPACE/dist/skeleton-${{ github.event.release.tag_name }}.vsix"
+        run: npm run package:vsix --workspace skeleton -- --out "$GITHUB_WORKSPACE/dist/skeleton-${{ env.RELEASE_TAG }}.vsix"
 
       - name: Publish extension
-        if: github.event_name == 'release'
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npm run publish:marketplace --workspace skeleton -- --packagePath "$GITHUB_WORKSPACE/dist/skeleton-${{ github.event.release.tag_name }}.vsix"
+        run: npm run publish:marketplace --workspace skeleton -- --packagePath "$GITHUB_WORKSPACE/dist/skeleton-${{ env.RELEASE_TAG }}.vsix"
 
   npm:
     name: npm
-    if: github.event_name == 'release'
+    needs: validate
+    if: needs.validate.outputs.npm == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: npm
     permissions:
       contents: read
@@ -103,7 +137,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ needs.validate.outputs.commit }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -117,7 +151,7 @@ jobs:
 
       - name: Apply release version
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_TAG: ${{ env.RELEASE_TAG }}
         run: |
           case "$RELEASE_TAG" in
             v*) ;;
@@ -136,68 +170,53 @@ jobs:
       - name: Validate package
         run: npm run check --workspace @yorun-ai/skel-highlight
 
-      - name: Verify minimum compatible skelc is released
-        env:
-          SKELC_COMPATIBILITY_FILE: ./editors/vscode/skelc-compatibility.json
-        run: |
-          minimum_version=$(node -p 'require(process.argv[1]).minimumVersion' "$SKELC_COMPATIBILITY_FILE")
-          git ls-remote --exit-code --tags https://github.com/yorun-ai/skelc.git "refs/tags/$minimum_version"
-
-      - name: Verify release commit is on main
-        run: |
-          git fetch origin main
-          git merge-base --is-ancestor HEAD origin/main
-
       - name: Publish package
         run: npm publish --workspace @yorun-ai/skel-highlight
 
   jetbrains:
     name: JetBrains Marketplace
-    if: github.event_name == 'release' && vars.JETBRAINS_MARKETPLACE_ENABLED == 'true'
+    needs: validate
+    if: needs.validate.outputs.jetbrains == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     environment: jetbrains-marketplace
     steps:
+      - name: Check JetBrains publishing credentials
+        env:
+          JETBRAINS_MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
+          JETBRAINS_CERTIFICATE_CHAIN: ${{ secrets.JETBRAINS_CERTIFICATE_CHAIN }}
+          JETBRAINS_PRIVATE_KEY: ${{ secrets.JETBRAINS_PRIVATE_KEY }}
+        run: |
+          if [ -z "${JETBRAINS_MARKETPLACE_TOKEN//[[:space:]]/}" ]; then
+            echo "JETBRAINS_MARKETPLACE_TOKEN is required" >&2
+            exit 1
+          fi
+          certificate="${JETBRAINS_CERTIFICATE_CHAIN//[[:space:]]/}"
+          key="${JETBRAINS_PRIVATE_KEY//[[:space:]]/}"
+          if { [ -n "$certificate" ] && [ -z "$key" ]; } || { [ -z "$certificate" ] && [ -n "$key" ]; }; then
+            echo "Set both JETBRAINS_CERTIFICATE_CHAIN and JETBRAINS_PRIVATE_KEY, or leave both unset" >&2
+            exit 1
+          fi
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ needs.validate.outputs.commit }}
       - uses: actions/setup-node@v7
         with:
           node-version: 22
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 25
+          java-version: 21
       - uses: gradle/actions/setup-gradle@v4
-      - name: Validate release version and ancestry
-        env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
-        run: |
-          node -e 'if (!/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(process.env.RELEASE_TAG) || process.env.RELEASE_TAG === "v0.0.0") process.exit(1)'
-          git fetch origin main
-          git merge-base --is-ancestor HEAD origin/main
-          echo "ORG_GRADLE_PROJECT_pluginVersion=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
-      - name: Read minimum supported skelc
-        id: compatibility
-        run: echo "version=$(node -p 'require("./editors/vscode/skelc-compatibility.json").minimumVersion')" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v7
-        with:
-          repository: yorun-ai/skelc
-          ref: ${{ steps.compatibility.outputs.version }}
-          path: .test/skelc-jetbrains
-      - uses: actions/setup-go@v7
-        with:
-          go-version-file: .test/skelc-jetbrains/go.mod
-          cache-dependency-path: .test/skelc-jetbrains/go.sum
-      - name: Build skelc
-        working-directory: .test/skelc-jetbrains
-        run: GOWORK=off go build -o "$RUNNER_TEMP/skelc" ./cmd/skelc
-      - name: Test and verify plugin
+      - name: Apply release version
+        run: echo "ORG_GRADLE_PROJECT_pluginVersion=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
+      - name: Verify release plugin
+        timeout-minutes: 40
         working-directory: editors/jetbrains
-        env:
-          SKELC_PATH: ${{ runner.temp }}/skelc
-        run: xvfb-run -a ./gradlew test verifyPlugin
-      - name: Sign and publish plugin
+        run: ./gradlew verifyPlugin
+      - name: Publish plugin (sign when configured)
+        timeout-minutes: 10
         working-directory: editors/jetbrains
         env:
           JETBRAINS_MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
@@ -206,6 +225,4 @@ jobs:
           JETBRAINS_PRIVATE_KEY_PASSWORD: ${{ secrets.JETBRAINS_PRIVATE_KEY_PASSWORD }}
         run: |
           test -n "$JETBRAINS_MARKETPLACE_TOKEN"
-          test -n "$JETBRAINS_CERTIFICATE_CHAIN"
-          test -n "$JETBRAINS_PRIVATE_KEY"
           ./gradlew publishPlugin

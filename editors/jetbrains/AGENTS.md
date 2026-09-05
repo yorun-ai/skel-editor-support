@@ -1,7 +1,7 @@
 # Skel JetBrains Plugin Guidelines
 
 - This is an independent Gradle/Kotlin project inside skel-editor-support, not an npm workspace package.
-- Target IntelliJ Platform 2026.2 (build 262), Java 25, and the public LSP client API. Do not depend on Go-specific APIs.
+- Target IntelliJ Platform 2025.2.1 (build 252.25557.131), Java 21, and the public LSP server API retained for backward compatibility. Use LspServerManager.getInstance rather than direct service lookup. Do not depend on Go-specific APIs.
 - Keep lexical highlighting local and language intelligence in `skelc lsp`. The flat PSI tree exists only to support editor APIs, not to reproduce the Skel parser.
 - Generate vocabulary resources from `packages/highlight/src/language.js`; do not maintain duplicate keyword lists. Read the existing VS Code compatibility manifest as the shared minimum skelc version.
 - LSP registrations belong in the optional `skel-lsp.xml` descriptor. Basic editing must load without the LSP module or a skelc installation.

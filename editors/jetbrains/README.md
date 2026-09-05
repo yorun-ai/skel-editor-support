@@ -1,6 +1,6 @@
 # Skel Language Support for JetBrains
 
-Skel editing for IntelliJ Platform 2026.2 (build 262). Plugin ID: `ai.yorun.skel`.
+Skel editing for IntelliJ Platform 2025.2.1 and newer (minimum build 252.25557.131). Plugin ID: `ai.yorun.skel`.
 
 ## Features
 
@@ -14,15 +14,15 @@ The plugin uses shared Skel vocabulary for lexical highlighting and leaves seman
 
 ## Compatibility
 
-The supported IDE line is **2026.2.x**. Build and test against GoLand 2026.2.2; the verification matrix includes GoLand and IntelliJ IDEA. Other IntelliJ Platform products may be compatible but require product-specific testing before claiming support. No Go plugin APIs are required.
+The minimum IDE version is **2025.2.1**. Compile and test against GoLand 2025.2.1 using Java 21. The verification matrix covers GoLand and IntelliJ IDEA at 2025.2.1 and 2026.2.2. There is no fixed upper build bound; newer IDE versions are allowed, but are not guaranteed compatible until verified. Other IntelliJ Platform products may be compatible but require product-specific testing before claiming support. No Go plugin APIs are required.
 
 Language intelligence requires the JetBrains `com.intellij.modules.lsp` module and **skelc v0.14.0 or newer**. Without that module, the plugin provides basic highlighting and editing only. Local files in trusted projects are supported. Remote Development and virtual files have not been validated.
 
-Standard LSP capabilities depend on the server and IDE. The VS Code-specific schema JSON report interface is not implemented; schema CodeLens is disabled to avoid presenting an action without a report viewer. Use `skelc schema diff` for a complete report. No parser, formatter, or analyzer is copied from skelc.
+Standard LSP capabilities depend on the server and IDE. Diagnostics, completion, hover, definitions, references and document formatting work on the baseline. Document/workspace symbols require IDE 2025.3+, and LSP rename requires 2026.1.1+. See the [JetBrains LSP feature matrix](https://plugins.jetbrains.com/docs/intellij/language-server-protocol.html#supported-features). The VS Code-specific schema JSON report interface is not implemented; schema CodeLens is disabled to avoid presenting an action without a report viewer. Use `skelc schema diff` for a complete report. No parser, formatter, or analyzer is copied from skelc.
 
 ## Install and configure
 
-Until the first Marketplace release, build the plugin ZIP as described below and use **Settings | Plugins | gear | Install Plugin from Disk**. Restart if prompted. This repository does not imply the plugin is already listed on Marketplace.
+Install **Skel Language Support** from Marketplace when available, or build the plugin ZIP as described below and use **Settings | Plugins | gear | Install Plugin from Disk**. Restart if prompted. Marketplace availability is subject to JetBrains review.
 
 For language intelligence, install skelc:
 
@@ -39,7 +39,7 @@ If startup fails, check the Language Services widget, executable path, and `skel
 
 ## Development
 
-Prerequisites: Node.js 22+, JDK 25, and a compatible skelc for integration tests. Gradle is pinned through the checked-in wrapper. From the repository root run `npm ci` and `npm run check`, then:
+Prerequisites: Node.js 22+, JDK 21, and a compatible skelc for integration tests. Gradle is pinned through the checked-in wrapper. From the repository root run `npm ci` and `npm run check`, then:
 
 ```sh
 cd editors/jetbrains
@@ -55,7 +55,7 @@ SKELC_PATH=/absolute/path/to/skelc \
 ./gradlew test -PlocalPlatformPath=/absolute/path/to/GoLand.app/Contents
 ```
 
-Without `SKELC_PATH`, real server integration is explicitly skipped; lexer, version policy, and IDE fixture tests still run. CI sets it and runs against the minimum supported skelc version. Tests cover token restart boundaries, incomplete edits, shared fixtures, comment/bracket/quote behavior, LSP initialize/open/change/symbols/format/shutdown against the real server, and startup/restart/disable through the IDE LSP manager.
+Without `SKELC_PATH`, real server integration is explicitly skipped; lexer, version policy, and IDE fixture tests still run. CI sets it and runs against the minimum supported skelc version. PRs and main pushes run baseline tests only when JetBrains code or its shared inputs change. CI also exercises the five optional-signing configurations using `node --test scripts/jetbrains-signing.test.mjs` from the repository root, without signing or uploading. Main pushes also run the full Plugin Verifier matrix for those changes; manual CI input `full=true` runs all components. Release publishing requires successful main CI for the exact release commit and verifies the release-version plugin before uploading, without repeating server integration tests. Tests cover token restart boundaries, incomplete edits, shared fixtures, comment/bracket/quote behavior, LSP initialize/open/change/symbols/format/shutdown against the real server, and startup/restart/disable through the IDE LSP manager.
 
 ## Packaging and publishing
 
@@ -67,13 +67,13 @@ For local verification against an installed IDE, add both `-PlocalPlatformPath=/
 
 The ZIP is written under `build/distributions/`. Local builds use version `0.0.0`; for a release pass `-PpluginVersion=X.Y.Z`. Keep generated files out of Git. The plugin includes the repository Apache-2.0 license.
 
-For first publication, create/select the Yorun Vendor profile on JetBrains Marketplace, prepare the listing and screenshots, configure signing, run `signPlugin`, and manually upload the signed ZIP. Marketplace review is required. See the [official publishing guide](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html).
+For first publication, create/select the Yorun Vendor profile on JetBrains Marketplace, prepare the listing and screenshots, and manually upload the plugin ZIP. Author signing is optional; configure the signing secrets and run `signPlugin` if you want a signed ZIP. Marketplace review is required. See the [official publishing guide](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html).
 
 For later releases, the repository Publish workflow has a separate JetBrains job. After the first manual upload, set repository variable `JETBRAINS_MARKETPLACE_ENABLED` to `true`, create the `jetbrains-marketplace` GitHub environment, and configure these secrets in it:
 
-- `JETBRAINS_MARKETPLACE_TOKEN`
-- `JETBRAINS_CERTIFICATE_CHAIN`
-- `JETBRAINS_PRIVATE_KEY`
-- `JETBRAINS_PRIVATE_KEY_PASSWORD`
+- `JETBRAINS_MARKETPLACE_TOKEN` — required for upload authentication
+- `JETBRAINS_CERTIFICATE_CHAIN` — optional PEM certificate content
+- `JETBRAINS_PRIVATE_KEY` — optional PEM private key content
+- `JETBRAINS_PRIVATE_KEY_PASSWORD` — only needed for an encrypted private key
 
-A published `v<version>` GitHub Release injects the version through Gradle, validates compatibility, signs and uploads the plugin. Keep the job disabled until the first listing and credentials are ready. Do not publish version `0.0.0`. Publication does not bypass Marketplace review.
+A published `v<version>` GitHub Release injects the version through Gradle, validates compatibility and uploads the plugin. Publishing checks for a non-empty token and paired signing credentials before downloading the SDK. With only the token configured, author signing is skipped. Provide both certificate and private key to enable signing; empty values are treated as absent, and configuring only one fails with a clear error. Keep the job disabled until the first listing and credentials are ready. Do not publish version `0.0.0`. Publication does not bypass Marketplace review.

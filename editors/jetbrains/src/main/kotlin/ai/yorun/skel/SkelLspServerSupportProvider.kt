@@ -7,30 +7,30 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspClient
-import com.intellij.platform.lsp.api.LspClientManager
-import com.intellij.platform.lsp.api.LspIntegrationProvider
-import com.intellij.platform.lsp.api.ProjectWideLspClientDescriptor
-import com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
+import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspServerManager
+import com.intellij.platform.lsp.api.LspServerSupportProvider
+import com.intellij.platform.lsp.api.ProjectWideLspServerDescriptor
+import com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem
 import org.eclipse.lsp4j.ConfigurationItem
 
-class SkelLspIntegrationProvider : LspIntegrationProvider {
-    override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspIntegrationProvider.LspClientStarter) {
+class SkelLspServerSupportProvider : LspServerSupportProvider {
+    override fun fileOpened(project: Project, file: VirtualFile, serverStarter: LspServerSupportProvider.LspServerStarter) {
         if (supports(file) && TrustedProjects.isProjectTrusted(project) && project.getService(SkelSettings::class.java).state.enabled) {
-            clientStarter.ensureClientStarted(SkelLspClientDescriptor(project))
+            serverStarter.ensureServerStarted(SkelLspServerDescriptor(project))
         }
     }
-    override fun createWidgetItem(lspClient: LspClient, currentFile: VirtualFile?) =
-        LspClientWidgetItem(lspClient, currentFile, SkelIcons.FILE, SkelConfigurable::class.java)
+    override fun createLspServerWidgetItem(lspServer: LspServer, currentFile: VirtualFile?) =
+        LspServerWidgetItem(lspServer, currentFile, SkelIcons.FILE, SkelConfigurable::class.java)
 
     companion object {
         fun supports(file: VirtualFile) = file.isInLocalFileSystem && !file.isDirectory && file.extension == "skel"
     }
 }
 
-class SkelLspClientDescriptor(project: Project) : ProjectWideLspClientDescriptor(project, "Skel") {
+class SkelLspServerDescriptor(project: Project) : ProjectWideLspServerDescriptor(project, "Skel") {
     private val options = project.getService(SkelSettings::class.java).state.copy()
-    override fun isSupportedFile(file: VirtualFile) = SkelLspIntegrationProvider.supports(file)
+    override fun isSupportedFile(file: VirtualFile) = SkelLspServerSupportProvider.supports(file)
     override fun getLanguageId(file: VirtualFile) = "skel"
     override fun createCommandLine() = if (TrustedProjects.isProjectTrusted(project) && options.enabled) {
         SkelServerCommand.verified(options.executable, project.basePath)
@@ -54,6 +54,6 @@ class SkelRestartAction : DumbAwareAction() {
     }
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.project ?: return
-        LspClientManager.getInstance(project).stopAndRestartClientsIfNeeded(SkelLspIntegrationProvider::class.java)
+        LspServerManager.getInstance(project).stopAndRestartIfNeeded(SkelLspServerSupportProvider::class.java)
     }
 }

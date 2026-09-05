@@ -7,7 +7,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
-import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.api.LspServerManager
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
@@ -74,7 +74,7 @@ class SkelConfigurable(private val project: Project) : Configurable {
     override fun apply() {
         if (!isModified) return
         settings.loadState(edited())
-        LspClientManager.getInstance(project).stopAndRestartClientsIfNeeded(SkelLspIntegrationProvider::class.java)
+        LspServerManager.getInstance(project).stopAndRestartIfNeeded(SkelLspServerSupportProvider::class.java)
     }
     override fun reset() {
         val state = settings.state

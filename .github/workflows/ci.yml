@@ -4,17 +4,104 @@ on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      full:
+        description: Run all tests and compatibility matrices
+        type: boolean
+        default: false
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  check:
+  changes:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      node: ${{ steps.scope.outputs.node }}
+      vscode_package: ${{ steps.scope.outputs.vscode_package }}
+      vscode: ${{ steps.scope.outputs.vscode }}
+      highlight: ${{ steps.scope.outputs.highlight }}
+      jetbrains: ${{ steps.scope.outputs.jetbrains }}
+      workflow: ${{ steps.scope.outputs.workflow }}
+      full: ${{ steps.scope.outputs.full }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Test change classification
+        run: node --test scripts/ci-scope.test.mjs scripts/release-policy.test.mjs
+      - name: Select checks
+        id: scope
+        env:
+          CI_EVENT_NAME: ${{ github.event_name }}
+          FULL_CI: ${{ github.event_name == 'workflow_dispatch' && inputs.full }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          if [ "$FULL_CI" = true ]; then
+            node scripts/ci-scope.mjs </dev/null
+          elif [ "$CI_EVENT_NAME" = pull_request ]; then
+            git diff --name-only --no-renames -z "$BASE_SHA...$HEAD_SHA" | node scripts/ci-scope.mjs
+          else
+            if [ "$CI_EVENT_NAME" = workflow_dispatch ]; then
+              BASE_SHA=$(git rev-parse --verify "$HEAD_SHA^" 2>/dev/null || git hash-object -w -t tree /dev/null)
+            elif [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = 0000000000000000000000000000000000000000 ]; then
+              BASE_SHA=$(git hash-object -w -t tree /dev/null)
+            fi
+            git diff --name-only --no-renames -z "$BASE_SHA" "$HEAD_SHA" | node scripts/ci-scope.mjs
+          fi
+
+  check:
+    name: Package checks
+    needs: changes
+    if: needs.changes.outputs.node == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Check VS Code package
+        if: needs.changes.outputs.vscode_package == 'true'
+        run: npm run check --workspace skeleton
+      - name: Check highlighter package
+        if: needs.changes.outputs.highlight == 'true'
+        run: npm run check --workspace @yorun-ai/skel-highlight
+
+  workflow:
+    name: Workflow lint
+    needs: changes
+    if: needs.changes.outputs.workflow == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.x'
+          cache: false
+      - name: Lint workflows
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+
+  vscode:
+    name: VS Code integration
+    needs: changes
+    if: needs.changes.outputs.vscode == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -28,8 +115,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Validate editor support packages
-        run: npm run check
+      - name: Build editor support packages
+        run: npm run build --workspace skeleton
 
       - name: Read skelc compatibility
         id: skelc-compatibility
@@ -55,7 +142,7 @@ jobs:
             fi
           }
           resolve_ref minimum "$MINIMUM_VERSION"
-          resolve_ref latest "$LATEST_VERSION"
+          if [ "${{ github.event_name == 'push' || needs.changes.outputs.full == 'true' }}" = true ]; then resolve_ref latest "$LATEST_VERSION"; fi
 
       - name: Check out minimum supported skelc
         uses: actions/checkout@v7
@@ -65,6 +152,7 @@ jobs:
           path: .test/skelc-minimum
 
       - name: Check out latest tested skelc
+        if: (github.event_name == 'push' || needs.changes.outputs.full == 'true')
         uses: actions/checkout@v7
         with:
           repository: yorun-ai/skelc
@@ -74,10 +162,8 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version-file: .test/skelc-latest/go.mod
-          cache-dependency-path: |
-            .test/skelc-minimum/go.sum
-            .test/skelc-latest/go.sum
+          go-version-file: ${{ (github.event_name == 'push' || needs.changes.outputs.full == 'true') && '.test/skelc-latest/go.mod' || '.test/skelc-minimum/go.mod' }}
+          cache-dependency-path: .test/skelc-minimum/go.sum
 
       - name: Build minimum supported skelc language server
         working-directory: .test/skelc-minimum
@@ -86,36 +172,46 @@ jobs:
         run: GOWORK=off go build -ldflags "$SKELC_LDFLAGS" -o "$RUNNER_TEMP/skelc-minimum" ./cmd/skelc
 
       - name: Build latest tested skelc language server
+        if: (github.event_name == 'push' || needs.changes.outputs.full == 'true')
         working-directory: .test/skelc-latest
         env:
           SKELC_LDFLAGS: ${{ steps.skelc-source.outputs.latest_ldflags }}
         run: GOWORK=off go build -ldflags "$SKELC_LDFLAGS" -o "$RUNNER_TEMP/skelc-latest" ./cmd/skelc
 
       - name: Test minimum supported skelc LSP integration
+        timeout-minutes: 5
         env:
           SKELC_PATH: ${{ runner.temp }}/skelc-minimum
         run: npm run test:integration
 
       - name: Test latest skelc LSP integration
+        timeout-minutes: 5
+        if: (github.event_name == 'push' || needs.changes.outputs.full == 'true')
         env:
           SKELC_PATH: ${{ runner.temp }}/skelc-latest
         run: npm run test:integration
 
       - name: Test minimum supported skelc in Extension Host
+        timeout-minutes: 10
         env:
           SKELC_PATH: ${{ runner.temp }}/skelc-minimum
           VSCODE_VERSION: "1.91.0"
         run: xvfb-run -a npm run test:extension
 
       - name: Test latest skelc in Extension Host
+        timeout-minutes: 10
+        if: (github.event_name == 'push' || needs.changes.outputs.full == 'true')
         env:
           SKELC_PATH: ${{ runner.temp }}/skelc-latest
           VSCODE_VERSION: "1.91.0"
         run: xvfb-run -a npm run test:extension
 
   highlight-compatibility:
+    needs: changes
+    if: needs.changes.outputs.highlight == 'true' && (github.event_name == 'push' || needs.changes.outputs.full == 'true')
     name: Highlight compatibility (Node ${{ matrix.node-version }}, ${{ matrix.peer-set }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -160,8 +256,11 @@ jobs:
         run: npm run check --workspace @yorun-ai/skel-highlight
 
   jetbrains:
+    needs: changes
+    if: needs.changes.outputs.jetbrains == 'true'
     name: JetBrains plugin
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -170,8 +269,11 @@ jobs:
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 25
+          java-version: 21
       - uses: gradle/actions/setup-gradle@v4
+      - name: Test optional signing configuration
+        timeout-minutes: 10
+        run: node --test scripts/jetbrains-signing.test.mjs
       - name: Read minimum supported skelc
         id: compatibility
         run: echo "version=$(node -p 'require("./editors/vscode/skelc-compatibility.json").minimumVersion')" >> "$GITHUB_OUTPUT"
@@ -188,19 +290,35 @@ jobs:
       - name: Build skelc
         working-directory: .test/skelc-jetbrains
         run: GOWORK=off go build -o "$RUNNER_TEMP/skelc" ./cmd/skelc
-      - name: Test and verify plugin
+      - name: Test plugin
+        timeout-minutes: 15
         working-directory: editors/jetbrains
         env:
           SKELC_PATH: ${{ runner.temp }}/skelc
-        run: xvfb-run -a ./gradlew test verifyPlugin
+        run: xvfb-run -a ./gradlew test
+      - name: Verify supported IDEs
+        timeout-minutes: 40
+        if: (github.event_name == 'push' || needs.changes.outputs.full == 'true')
+        working-directory: editors/jetbrains
+        run: ./gradlew verifyPlugin
 
   ci-checks:
     name: CI / Required Checks
     if: ${{ always() }}
-    needs: [check, highlight-compatibility, jetbrains]
+    needs: [changes, check, vscode, highlight-compatibility, jetbrains, workflow]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Verify CI results
         env:
           NEEDS: ${{ toJSON(needs) }}
-        run: echo "$NEEDS" | jq --exit-status 'all(.[]; .result == "success")'
+          EXTENDED: ${{ github.event_name == 'push' || needs.changes.outputs.full == 'true' }}
+        run: |
+          echo "$NEEDS" | jq --exit-status '
+            .changes.result == "success" and
+            (.changes.outputs as $scope |
+              (.workflow.result == (if $scope.workflow == "true" then "success" else "skipped" end)) and
+              (.check.result == (if $scope.node == "true" then "success" else "skipped" end)) and
+              (.vscode.result == (if $scope.vscode == "true" then "success" else "skipped" end)) and
+              (.jetbrains.result == (if $scope.jetbrains == "true" then "success" else "skipped" end)) and
+              (."highlight-compatibility".result == (if $scope.highlight == "true" and env.EXTENDED == "true" then "success" else "skipped" end)))'
