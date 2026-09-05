@@ -1,0 +1,23 @@
+<idea-plugin>
+    <id>ai.yorun.skel</id>
+    <name>Skel Language Support</name>
+    <vendor url="https://yorun.ai">Yorun</vendor>
+    <description><![CDATA[
+        Language support for Skel, the open-source contract language for Yorun and Vine.
+        Includes syntax highlighting, comments and bracket matching. Install skelc v0.14.0
+        or newer for diagnostics, completion, documentation, navigation, formatting and rename.
+        Configure its executable under Settings | Languages &amp; Frameworks | Skel.
+        <a href="https://github.com/yorun-ai/skel-editor-support">Source and issue tracker</a>.
+    ]]></description>
+    <depends>com.intellij.modules.platform</depends>
+    <depends optional="true" config-file="skel-lsp.xml">com.intellij.modules.lsp</depends>
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType name="Skel" language="skel" implementationClass="ai.yorun.skel.SkelFileType" fieldName="INSTANCE" extensions="skel"/>
+        <lang.parserDefinition language="skel" implementationClass="ai.yorun.skel.SkelParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="skel" implementationClass="ai.yorun.skel.SkelSyntaxHighlighterFactory"/>
+        <colorSettingsPage implementation="ai.yorun.skel.SkelColorSettingsPage"/>
+        <lang.commenter language="skel" implementationClass="ai.yorun.skel.SkelCommenter"/>
+        <lang.braceMatcher language="skel" implementationClass="ai.yorun.skel.SkelBraceMatcher"/>
+        <quoteHandler fileType="Skel" className="ai.yorun.skel.SkelQuoteHandler"/>
+    </extensions>
+</idea-plugin>

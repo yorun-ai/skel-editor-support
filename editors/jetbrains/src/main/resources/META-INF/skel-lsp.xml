@@ -1,0 +1,11 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <platform.lsp.integrationProvider implementation="ai.yorun.skel.SkelLspIntegrationProvider"/>
+        <projectConfigurable parentId="language" id="ai.yorun.skel.settings" displayName="Skel" instance="ai.yorun.skel.SkelConfigurable"/>
+    </extensions>
+    <actions>
+        <action id="Skel.RestartLanguageServer" class="ai.yorun.skel.SkelRestartAction" text="Restart Skel Language Server" description="Restart skelc lsp for this project">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
