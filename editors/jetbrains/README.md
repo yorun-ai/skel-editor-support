@@ -55,7 +55,7 @@ SKELC_PATH=/absolute/path/to/skelc \
 ./gradlew test -PlocalPlatformPath=/absolute/path/to/GoLand.app/Contents
 ```
 
-Without `SKELC_PATH`, real server integration is explicitly skipped; lexer, version policy, and IDE fixture tests still run. CI sets it and runs against the minimum supported skelc version. PRs and main pushes run baseline tests only when JetBrains code or its shared inputs change. The full Plugin Verifier matrix runs only when explicitly requested with manual CI input `full=true`, or during publishing. Release publishing always runs tests and the full matrix. Tests cover token restart boundaries, incomplete edits, shared fixtures, comment/bracket/quote behavior, LSP initialize/open/change/symbols/format/shutdown against the real server, and startup/restart/disable through the IDE LSP manager.
+Without `SKELC_PATH`, real server integration is explicitly skipped; lexer, version policy, and IDE fixture tests still run. CI sets it and runs against the minimum supported skelc version. PRs and main pushes run baseline tests only when JetBrains code or its shared inputs change. CI also exercises the five optional-signing configurations using `node --test scripts/jetbrains-signing.test.mjs` from the repository root, without signing or uploading. Main pushes also run the full Plugin Verifier matrix for those changes; manual CI input `full=true` runs all components. Release publishing requires successful main CI for the exact release commit and verifies the release-version plugin before uploading, without repeating server integration tests. Tests cover token restart boundaries, incomplete edits, shared fixtures, comment/bracket/quote behavior, LSP initialize/open/change/symbols/format/shutdown against the real server, and startup/restart/disable through the IDE LSP manager.
 
 ## Packaging and publishing
 
@@ -67,13 +67,13 @@ For local verification against an installed IDE, add both `-PlocalPlatformPath=/
 
 The ZIP is written under `build/distributions/`. Local builds use version `0.0.0`; for a release pass `-PpluginVersion=X.Y.Z`. Keep generated files out of Git. The plugin includes the repository Apache-2.0 license.
 
-For first publication, create/select the Yorun Vendor profile on JetBrains Marketplace, prepare the listing and screenshots, configure signing, run `signPlugin`, and manually upload the signed ZIP. Marketplace review is required. See the [official publishing guide](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html).
+For first publication, create/select the Yorun Vendor profile on JetBrains Marketplace, prepare the listing and screenshots, and manually upload the plugin ZIP. Author signing is optional; configure the signing secrets and run `signPlugin` if you want a signed ZIP. Marketplace review is required. See the [official publishing guide](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html).
 
 For later releases, the repository Publish workflow has a separate JetBrains job. After the first manual upload, set repository variable `JETBRAINS_MARKETPLACE_ENABLED` to `true`, create the `jetbrains-marketplace` GitHub environment, and configure these secrets in it:
 
-- `JETBRAINS_MARKETPLACE_TOKEN`
-- `JETBRAINS_CERTIFICATE_CHAIN`
-- `JETBRAINS_PRIVATE_KEY`
-- `JETBRAINS_PRIVATE_KEY_PASSWORD`
+- `JETBRAINS_MARKETPLACE_TOKEN` — required for upload authentication
+- `JETBRAINS_CERTIFICATE_CHAIN` — optional PEM certificate content
+- `JETBRAINS_PRIVATE_KEY` — optional PEM private key content
+- `JETBRAINS_PRIVATE_KEY_PASSWORD` — only needed for an encrypted private key
 
-A published `v<version>` GitHub Release injects the version through Gradle, validates compatibility, signs and uploads the plugin. Keep the job disabled until the first listing and credentials are ready. Do not publish version `0.0.0`. Publication does not bypass Marketplace review.
+A published `v<version>` GitHub Release injects the version through Gradle, validates compatibility and uploads the plugin. Publishing checks for a non-empty token and paired signing credentials before downloading the SDK. With only the token configured, author signing is skipped. Provide both certificate and private key to enable signing; empty values are treated as absent, and configuring only one fails with a clear error. Keep the job disabled until the first listing and credentials are ready. Do not publish version `0.0.0`. Publication does not bypass Marketplace review.

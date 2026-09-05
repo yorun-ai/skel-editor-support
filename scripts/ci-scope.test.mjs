@@ -8,9 +8,8 @@ import { classifyChanges } from './ci-scope.mjs';
 
 const active = paths => Object.entries(classifyChanges(paths)).filter(([, value]) => value).map(([key]) => key);
 
-test('docs, workflow and unrelated changes never select application suites', () => {
-  for (const path of ['README.md', 'editors/jetbrains/README.md', '.github/workflows/ci.yml',
-    '.github/workflows/publish.yml', '.github/dependabot.yml', 'scripts/ci-scope.mjs', 'notes.txt']) {
+test('docs and unrelated changes never select application suites', () => {
+  for (const path of ['README.md', 'editors/jetbrains/README.md', '.github/dependabot.yml', 'scripts/ci-scope.mjs', 'notes.txt']) {
     assert.deepEqual(active([path]), [], path);
   }
 });
@@ -112,4 +111,42 @@ test('workflow diffs PRs, pushes, initial pushes and manual commits without forc
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
+});
+
+test('required gate accepts scoped main matrices and rejects unexpected skips or cancellations', () => {
+  const workflow = readFileSync('.github/workflows/ci.yml', 'utf8');
+  const shell = workflow.split('      - name: Verify CI results')[1].split('        run: |\n')[1]
+    .split('\n').map(line => line.slice(10)).join('\n');
+  for (const extended of [false, true]) {
+    for (const paths of [['.github/workflows/publish.yml'], [], ['editors/jetbrains/src/Test.kt'], ['packages/highlight/src/prism.js'], ['editors/vscode/src/client.js']]) {
+      const scope = classifyChanges(paths);
+      const needs = { changes: { result: 'success', outputs: Object.fromEntries(Object.entries(scope).map(([k, v]) => [k, String(v)])) } };
+      for (const [job, selected] of Object.entries({ check: scope.node, vscode: scope.vscode,
+        workflow: scope.workflow, jetbrains: scope.jetbrains, 'highlight-compatibility': scope.highlight && extended })) {
+        needs[job] = { result: selected ? 'success' : 'skipped' };
+      }
+      const run = () => spawnSync('bash', ['-eo', 'pipefail', '-c', shell], {
+        encoding: 'utf8', env: { ...process.env, NEEDS: JSON.stringify(needs), EXTENDED: String(extended) },
+      });
+      assert.equal(run().status, 0);
+      const workflowResult = needs.workflow.result;
+      needs.workflow.result = 'cancelled';
+      assert.notEqual(run().status, 0);
+      needs.workflow.result = scope.workflow ? 'skipped' : 'success';
+      assert.notEqual(run().status, 0);
+      needs.workflow.result = workflowResult;
+      needs.changes.result = 'cancelled';
+      assert.notEqual(run().status, 0);
+      needs.changes.result = 'success';
+      needs.jetbrains.result = scope.jetbrains ? 'skipped' : 'success';
+      assert.notEqual(run().status, 0);
+    }
+  }
+});
+
+test('workflow changes select lint without application suites', () => {
+  for (const path of ['.github/workflows/ci.yml', '.github/workflows/publish.yml', '.github/actionlint.yaml']) {
+    assert.deepEqual(active([path]), ['workflow']);
+  }
+  assert.deepEqual(active(['scripts/jetbrains-signing.test.mjs']), ['jetbrains']);
 });
