@@ -103,6 +103,21 @@ Maintainers will review compatibility-sensitive changes to extension identity, s
 
 ## CI scope
 
-Every pull request reports `CI / Required Checks`. Documentation-only PRs run the scope checks and skip application tests. JetBrains-only PRs run the Java 21 baseline plugin tests; VS Code changes run package checks and real server/Extension Host integration. Shared grammar changes cover both clients, and shared scripts, dependencies or workflow changes conservatively run all affected jobs.
+PRs and pushes to main use the same changed-file rules. Every run reports `CI / Required Checks`; the lightweight scope tests always run so branch protection does not wait on a missing check.
 
-The expensive highlighter compatibility matrix and full JetBrains Plugin Verifier matrix run on pushes to main and manual CI runs. Publishing keeps its full validation. The required check validates each expected job and rejects failures, cancellations and unexpectedly skipped jobs. Update `scripts/ci-scope.mjs` and its tests when adding another component.
+| Changed files | Automatic checks |
+| --- | --- |
+| Documentation, CI configuration, unrelated files | Scope tests only |
+| JetBrains code/build inputs | Baseline Java 21 plugin tests |
+| VS Code runtime/configuration/tests | VS Code package checks and minimum skelc LSP/Extension Host tests |
+| VS Code assets/themes | VS Code package checks only |
+| Frontend highlighter adapters | Highlighter package checks only |
+| Shared vocabulary | Highlighter, VS Code package checks and JetBrains tests |
+| Shared highlighter fixtures | Highlighter checks and JetBrains tests |
+| TextMate grammar | Highlighter and VS Code checks |
+| skelc compatibility manifest | VS Code and JetBrains checks |
+| Root npm manifests/lockfile or asset preparation | Both npm packages and VS Code integration; no Gradle |
+
+Full highlighter/IDE matrices and the second VS Code server-version run require an explicit manual CI run with `full=true`. A manual run defaults to checking the selected commit's changes; main pushes compare the before/after revisions, and PRs compare against their merge base. Publishing retains its release validation.
+
+The required check rejects failures, cancellations and unexpectedly skipped jobs. Add new build inputs/components to `scripts/ci-scope.mjs` with regression tests; do not broaden unrelated changes into a full test run.
