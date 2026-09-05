@@ -27,6 +27,8 @@ Superseded PR runs are cancelled. Main runs are isolated by commit SHA and never
 4. Publish validates the existing published Release, tag checkout, ancestry on main, dated VS Code changelog and released minimum skelc version. It requires the latest main-push `ci.yml` run for the exact SHA to have completed successfully. PR CI, another SHA, missing, pending, failed or cancelled CI cannot satisfy this gate.
 5. VS Code, npm and the enabled JetBrains channel run independently after validation, checking out the validated SHA. Package versions are injected only into temporary checkouts. Package checks and JetBrains release-artifact verification remain; server integration suites are not repeated during publication.
 
+Author signing is optional: the Marketplace token alone is sufficient. Configure both certificate and private key to sign; configuring only one is rejected.
+
 JetBrains publication remains opt-in through `JETBRAINS_MARKETPLACE_ENABLED=true` and its environment secrets. Selecting JetBrains explicitly while disabled fails validation. Selecting `all` includes JetBrains only when enabled.
 
 For recovery, rerun failed jobs or manually dispatch Publish for the existing published tag with only the failed channel selected. Do not select already published channels: existing versions are not overwritten. The validation helper comes from the workflow revision while product sources come from the release SHA, so helper fixes can recover older releases. Manual recovery must still pass release/main-CI validation; it cannot publish an arbitrary branch or draft Release. Runs for the same release tag are serialized.

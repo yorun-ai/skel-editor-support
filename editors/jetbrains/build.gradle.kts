@@ -36,15 +36,23 @@ val generateLanguageResources = tasks.register<Exec>("generateLanguageResources"
 sourceSets.main { resources.srcDir(generateLanguageResources) }
 sourceSets.test { resources.srcDir("../../packages/highlight/test/fixtures") }
 
+// GitHub passes missing secrets as empty strings. Keep those providers absent so
+// publishPlugin skips author signing when only the Marketplace token is configured.
+val signingCertificate = providers.environmentVariable("JETBRAINS_CERTIFICATE_CHAIN").filter { it.isNotBlank() }
+val signingKey = providers.environmentVariable("JETBRAINS_PRIVATE_KEY").filter { it.isNotBlank() }
+require(signingCertificate.isPresent == signingKey.isPresent) {
+    "Set both JETBRAINS_CERTIFICATE_CHAIN and JETBRAINS_PRIVATE_KEY, or leave both unset for unsigned publishing."
+}
+
 intellijPlatform {
     pluginConfiguration {
         name = "Skel Language Support"
         ideaVersion { sinceBuild = "252.25557.131"; untilBuild = provider { null } }
     }
     signing {
-        certificateChain = providers.environmentVariable("JETBRAINS_CERTIFICATE_CHAIN")
-        privateKey = providers.environmentVariable("JETBRAINS_PRIVATE_KEY")
-        password = providers.environmentVariable("JETBRAINS_PRIVATE_KEY_PASSWORD")
+        certificateChain = signingCertificate
+        privateKey = signingKey
+        password = providers.environmentVariable("JETBRAINS_PRIVATE_KEY_PASSWORD").filter { it.isNotEmpty() }
     }
     publishing { token = providers.environmentVariable("JETBRAINS_MARKETPLACE_TOKEN") }
     pluginVerification {

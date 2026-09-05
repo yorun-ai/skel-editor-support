@@ -194,7 +194,7 @@ jobs:
       - name: Verify release plugin
         working-directory: editors/jetbrains
         run: ./gradlew verifyPlugin
-      - name: Sign and publish plugin
+      - name: Publish plugin (sign when configured)
         working-directory: editors/jetbrains
         env:
           JETBRAINS_MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
@@ -203,6 +203,4 @@ jobs:
           JETBRAINS_PRIVATE_KEY_PASSWORD: ${{ secrets.JETBRAINS_PRIVATE_KEY_PASSWORD }}
         run: |
           test -n "$JETBRAINS_MARKETPLACE_TOKEN"
-          test -n "$JETBRAINS_CERTIFICATE_CHAIN"
-          test -n "$JETBRAINS_PRIVATE_KEY"
           ./gradlew publishPlugin
