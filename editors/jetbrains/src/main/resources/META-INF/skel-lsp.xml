@@ -1,6 +1,6 @@
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
-        <platform.lsp.integrationProvider implementation="ai.yorun.skel.SkelLspIntegrationProvider"/>
+        <platform.lsp.serverSupportProvider implementation="ai.yorun.skel.SkelLspServerSupportProvider"/>
         <projectConfigurable parentId="language" id="ai.yorun.skel.settings" displayName="Skel" instance="ai.yorun.skel.SkelConfigurable"/>
     </extensions>
     <actions>
