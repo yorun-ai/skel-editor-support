@@ -4,6 +4,12 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ## [Unreleased]
 
+## [0.11.2] - 2026-09-05
+
+### Changed
+
+- Update vscode-languageclient to 10.1.1 and its LSP dependencies.
+
 ## [0.11.1] - 2026-08-17
 
 ### Changed
