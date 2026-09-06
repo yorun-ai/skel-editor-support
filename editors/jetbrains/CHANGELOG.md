@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Highlight keyword-named fields such as `data: list<TItem>` as identifiers while preserving declaration keyword highlighting.
+
 ## [0.11.2] - 2026-09-05
 
 ### Added

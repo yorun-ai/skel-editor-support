@@ -25,6 +25,20 @@ class SkelLexerTest {
         assertEquals(SkelTokens.IDENTIFIER, tokens("domainName").single().first)
     }
 
+    @Test fun keywordSpellingInFields() {
+        val text = "pub data PageResp<TItem> {\n  @desc(\"数据\")\n  data: list<TItem>\n}"
+        assertEquals(listOf(SkelTokens.KEYWORD, SkelTokens.IDENTIFIER),
+            tokens(text).filter { it.second == "data" }.map { it.first })
+        for (word in SkelVocabulary.keywords + SkelVocabulary.builtinTypes) {
+            for (gap in listOf("", " ", "\t")) {
+                assertEquals(SkelTokens.IDENTIFIER, tokens("$word$gap:").first().first)
+            }
+        }
+        assertEquals(SkelTokens.LINE_COMMENT, tokens("// data:").single().first)
+        assertEquals(SkelTokens.STRING, tokens("\"data:\"").single().first)
+        assertEquals(SkelTokens.ANNOTATION, tokens("@data").single().first)
+    }
+
     @Test fun multilineAndEscapedStrings() {
         val text = "\"escaped \\\" quote\" \"\"\"line one\n/* string, not comment */\nline two\"\"\""
         assertEquals(listOf(SkelTokens.STRING, TokenType.WHITE_SPACE, SkelTokens.STRING), tokens(text).map { it.first })
@@ -33,7 +47,7 @@ class SkelLexerTest {
     }
 
     @Test fun everyTokenBoundaryCanRestart() {
-        val text = "domain sample\n/* multiple\nlines */\n@description(\"\"\"hello\nworld\"\"\")\ndata Person { id: uuid }"
+        val text = "domain sample\n/* multiple\nlines */\n@description(\"\"\"hello\nworld\"\"\")\ndata Person { data: list<string> }"
         val lexer = SkelLexer()
         lexer.start(text)
         while (lexer.tokenType != null) {

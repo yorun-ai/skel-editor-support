@@ -14,6 +14,7 @@ function skelHighlightJs(hljs) {
       { scope: "string", begin: /"""/, end: /"""/ },
       { scope: "string", begin: /"/, end: /"/, contains: [hljs.BACKSLASH_ESCAPE] },
       { scope: "meta", begin: /@[A-Za-z_][A-Za-z0-9_]*/ },
+      { scope: "property", begin: /\b[A-Za-z_][A-Za-z0-9_]*(?=[ \t]*:)/ },
       hljs.C_NUMBER_MODE,
       { scope: "title.class", begin: /\b[A-Z][A-Za-z0-9_]*\b/ }
     ]
