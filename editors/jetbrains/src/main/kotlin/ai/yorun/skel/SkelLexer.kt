@@ -69,7 +69,11 @@ class SkelLexer : LexerBase() {
             identifierStart(c) -> {
                 while (end < limit && identifierPart(buffer[end])) end++
                 val word = buffer.subSequence(start, end).toString()
+                // A name followed by ':' is an identifier even when it shares a keyword spelling.
+                var following = end
+                while (following < limit && buffer[following] in " \t") following++
                 token = when {
+                    following < limit && buffer[following] == ':' -> SkelTokens.IDENTIFIER
                     word in SkelVocabulary.keywords -> SkelTokens.KEYWORD
                     word in SkelVocabulary.builtinTypes || c in 'A'..'Z' -> SkelTokens.TYPE
                     else -> SkelTokens.IDENTIFIER

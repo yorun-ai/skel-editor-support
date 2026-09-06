@@ -71,3 +71,21 @@ test("TextMate grammar preserves multiline and incomplete editing state", async 
   const incomplete = grammar.tokenizeLine('@desc("unfinished', textmate.INITIAL);
   assert.ok(incomplete.tokens.some((token) => token.scopes.includes("string.quoted.double.skel")));
 });
+
+test("TextMate distinguishes data declarations from data fields", async () => {
+  const grammar = await loadGrammar();
+  const lines = ['pub data PageResp<TItem> {', '  @desc("数据")', '  data: list<TItem>', '}'];
+  let ruleStack = textmate.INITIAL;
+  const dataScopes = [];
+  for (const line of lines) {
+    const result = grammar.tokenizeLine(line, ruleStack);
+    ruleStack = result.ruleStack;
+    for (const token of result.tokens) {
+      if (line.slice(token.startIndex, token.endIndex) === "data") dataScopes.push(token.scopes);
+    }
+  }
+  assert.equal(dataScopes.length, 2);
+  assert.ok(dataScopes[0].includes("keyword.declaration.skel"));
+  assert.ok(dataScopes[1].includes("variable.other.member.skel"));
+  assert.ok(!dataScopes[1].some((scope) => scope.startsWith("keyword.")));
+});

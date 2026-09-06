@@ -37,6 +37,7 @@ const skelStreamParser = {
     if (stream.match(/\d+(?:\.\d+)?/)) return "number";
     if (stream.match(/[A-Za-z_][A-Za-z0-9_]*/)) {
       const word = stream.current();
+      if (stream.match(/^[ \t]*:/, false)) return "variableName";
       if (keywordSet.has(word)) return "keyword";
       if (builtinTypeSet.has(word)) return "typeName";
       if (/^[A-Z]/.test(word)) return "className";

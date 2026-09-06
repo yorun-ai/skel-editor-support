@@ -10,7 +10,7 @@ Skel editing for IntelliJ Platform 2025.2.1 and newer (minimum build 252.25557.1
 - Project-specific executable path and enable/disable setting
 - Language Services status widget and **Tools | Restart Skel Language Server**
 
-The plugin uses shared Skel vocabulary for lexical highlighting and leaves semantic analysis to skelc. The flat PSI tree is for editor APIs only. Lexical highlighting is independent of the language server and does not exactly reproduce every contextual TextMate scope.
+The plugin uses shared Skel vocabulary for lexical highlighting and leaves semantic analysis to skelc. Field names followed by a colon, including keyword spellings such as `data`, are highlighted as identifiers; declaration keywords retain their keyword highlighting. The flat PSI tree is for editor APIs only. Lexical highlighting is independent of the language server and does not exactly reproduce every contextual TextMate scope.
 
 ## Compatibility
 

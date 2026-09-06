@@ -6,6 +6,7 @@ import { createStarryNight } from "@wooorm/starry-night";
 import hljs from "highlight.js/lib/core";
 import { createLowlight } from "lowlight";
 import { compile as compileMonarch } from "monaco-editor/editor/standalone/common/monarch/monarchCompile";
+import { MonarchTokenizer } from "monaco-editor/editor/standalone/common/monarch/monarchLexer";
 import Prism from "prismjs";
 import { refractor } from "refractor/core";
 import { skelLanguage } from "../dist/codemirror.js";
@@ -104,4 +105,47 @@ test("CodeMirror stream language emits semantic highlight classes", () => {
   assert.ok(tokens.some((token) => token.value === "@desc" && token.classes === "tok-meta"));
   assert.ok(tokens.some((token) => token.value === "@sensitive" && token.classes === "tok-meta"));
   assert.ok(tokens.some((token) => token.value === "@deprecated" && token.classes === "tok-meta"));
+});
+
+test("keyword and type spellings remain identifiers before a field colon", () => {
+  const instance = hljs.newInstance();
+  instance.registerLanguage("skel", skelHighlightJs);
+  for (const word of [...keywords, ...builtinTypes]) {
+    for (const gap of ["", " ", "\t"]) {
+      const source = `pub data PageResp<TItem> {\n  ${word}${gap}: list<TItem>\n}`;
+      const prism = Prism.highlight(source, skelPrism, "skel");
+      assert.match(prism, /token keyword">data/);
+      assert.ok(prism.includes(`token property">${word}</span>${gap}<span class="token punctuation">:`), prism);
+      const html = instance.highlight(source, { language: "skel" }).value;
+      assert.match(html, /hljs-keyword">data/);
+      assert.ok(html.includes(`hljs-property">${word}</span>${gap}:`), html);
+      const tokens = [];
+      highlightTree(skelLanguage.parser.parse(source), classHighlighter, (from, to, classes) => {
+        tokens.push({ from, value: source.slice(from, to), classes });
+      });
+      assert.ok(tokens.some((token) => token.value === "data" && token.classes === "tok-keyword"));
+      assert.ok(tokens.some((token) => token.from === source.indexOf("\n") + 3 &&
+        token.value === word && token.classes === "tok-variableName"), JSON.stringify(tokens));
+    }
+  }
+});
+
+test("Monaco tokenizes keyword-named fields as identifiers", () => {
+  const tokenizer = new MonarchTokenizer({}, {}, "skel", compileMonarch("skel", skelMonarch), {
+    getValue: () => 20000,
+    onDidChangeConfiguration: () => ({ dispose() {} })
+  });
+  try {
+    const declaration = tokenizer.tokenize("pub data PageResp<TItem> {", true, tokenizer.getInitialState());
+    assert.ok(declaration.tokens.some((token) => token.offset === 4 && token.type === "keyword.skel"));
+    for (const word of [...keywords, ...builtinTypes]) {
+      for (const gap of ["", " ", "\t"]) {
+        const result = tokenizer.tokenize(`  ${word}${gap}: list<TItem>`, true, declaration.endState);
+        assert.ok(result.tokens.some((token) => token.offset === 2 && token.type === "identifier.skel"));
+        assert.ok(result.tokens.some((token) => token.type === "type.skel"));
+      }
+    }
+  } finally {
+    tokenizer.dispose();
+  }
 });

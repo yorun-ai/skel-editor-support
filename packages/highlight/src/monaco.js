@@ -28,6 +28,7 @@ const skelMonarch = {
       [/"""/, "string", "@tripleString"],
       [/"(?:\\.|[^"\\])*"/, "string"],
       [/@[A-Za-z_][A-Za-z0-9_]*/, "annotation"],
+      [/[A-Za-z_][A-Za-z0-9_]*(?=[ \t]*:)/, "identifier"],
       [/[A-Za-z_][A-Za-z0-9_]*/, { cases: { "@keywords": "keyword", "@builtinTypes": "type", "@default": "identifier" } }],
       [/\d+(?:\.\d+)?/, "number"],
       [/[?=*]/, "operator"],

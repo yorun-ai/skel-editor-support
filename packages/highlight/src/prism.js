@@ -18,6 +18,7 @@ const skelPrism = Object.freeze({
     pattern: /@[A-Za-z_][A-Za-z0-9_]*/,
     alias: "annotation"
   },
+  property: /\b[A-Za-z_][A-Za-z0-9_]*(?=[ \t]*:)/,
   "class-name": {
     pattern: declarationNamePattern,
     lookbehind: true
