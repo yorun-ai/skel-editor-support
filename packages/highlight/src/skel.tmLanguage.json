@@ -314,7 +314,7 @@
       "patterns": [
         {
           "name": "support.type.builtin.skel",
-          "match": "\\b(int|float|bool|string|decimal|binary|timestamp|duration|localdate|localtime|localdatetime|uuid|json|PermissionCode|list|map)\\b"
+          "match": "\\b(int|float|bool|string|decimal|binary|timestamp|duration|localdate|localtime|localdatetime|uuid|json|list|map)\\b"
         }
       ]
     },

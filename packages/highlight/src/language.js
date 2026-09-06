@@ -12,7 +12,7 @@ const controlKeywords = Object.freeze([
 
 const builtinTypes = Object.freeze([
   "int", "float", "bool", "string", "decimal", "binary", "timestamp", "duration", "localdate", "localtime",
-  "localdatetime", "uuid", "json", "PermissionCode", "list", "map"
+  "localdatetime", "uuid", "json", "list", "map"
 ]);
 
 const keywords = Object.freeze([...declarationKeywords, ...controlKeywords]);
