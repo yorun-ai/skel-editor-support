@@ -25,14 +25,19 @@ pub actor ClientActor {
         credential {
             subject: string
         }
+        info {
+            subject: string
+        }
     }
 }
 
 pub service UserService {
     for ClientActor via client
 
-    @desc("""Find a user
-by identifier.""")
+    @desc("""
+    Find a user
+    by identifier.
+    """)
     method getUser {
         input {
             @sensitive
