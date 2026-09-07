@@ -125,6 +125,21 @@ async function waitForCodeLenses(peer, documentURI, accept, timeout = 3000) {
   throw new Error(`Timed out waiting for CodeLens state: ${JSON.stringify(lenses)}`);
 }
 
+test("shared highlighting fixture passes skelc semantic validation", {
+  skip: !process.env.SKELC_PATH
+}, () => {
+  const fixture = path.resolve(__dirname, "../../../packages/highlight/test/fixtures/compatibility.skel");
+  const result = childProcess.spawnSync(process.env.SKELC_PATH, ["check", "--skel-in", fixture], {
+    encoding: "utf8",
+    timeout: 10000
+  });
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  const checked = JSON.parse(result.stdout);
+  assert.equal(checked.valid, true);
+  assert.deepEqual(checked.diagnostics, []);
+});
+
 test("skelc completes the LSP initialize and shutdown lifecycle", {
   skip: !process.env.SKELC_PATH
 }, async () => {
