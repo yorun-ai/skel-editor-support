@@ -4,12 +4,14 @@ const vscode = require("vscode");
 const { LanguageClient } = require("vscode-languageclient/node");
 const compatibility = require("./compatibility");
 const server = require("./server");
+const { snapshot, ExecutableMonitor } = require("./executable-monitor");
 
 const restartCommand = "skel.restartLanguageServer";
 const showOutputCommand = "skel.showLanguageServerOutput";
 const installURL = "https://github.com/yorun-ai/skelc#install";
 
 let client;
+let executableMonitor;
 let fileEvents;
 let compatibilityReportContent = "{}\n";
 let compatibilityReportEmitter;
@@ -50,6 +52,8 @@ function serialize(operation) {
 }
 
 async function stopClient() {
+  executableMonitor?.dispose();
+  executableMonitor = undefined;
   const runningClient = client;
   client = undefined;
   if (runningClient) {
@@ -79,10 +83,19 @@ async function showStartupError(command, error) {
 async function startClient() {
   const command = configuredCommand();
   try {
+    const baseline = snapshot(command);
     await server.verifyServer(command);
     const nextClient = createClient(command);
     client = nextClient;
     await nextClient.start();
+    executableMonitor = new ExecutableMonitor(command, baseline, server.verifyServer, async isCurrent => {
+      const action = await vscode.window.showInformationMessage(
+        "skelc has been updated. Restart the language server to use the updated executable.",
+        "Restart Now", "Later"
+      );
+      if (action === "Restart Now" && isCurrent()) void restartClient();
+    });
+    executableMonitor.check();
   } catch (error) {
     await stopClient();
     void showStartupError(command, error instanceof Error ? error : new Error(String(error)));
@@ -137,6 +150,9 @@ async function activate(context) {
   fileEvents = vscode.workspace.createFileSystemWatcher("**/*.skel");
   compatibilityReportEmitter = new vscode.EventEmitter();
   context.subscriptions.push(
+    vscode.window.onDidChangeWindowState(state => {
+      if (state.focused) executableMonitor?.check();
+    }),
     fileEvents,
     compatibilityReportEmitter,
     vscode.workspace.registerTextDocumentContentProvider(compatibility.reportDocument.scheme, {

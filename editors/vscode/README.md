@@ -33,6 +33,8 @@ Install the `Skeleton DSL Support` extension from the VS Code Marketplace, then 
 
 The extension supports VS Code 1.91 or newer and requires `skelc v0.14.0` or newer. The language server reports syntax, source-directory-scoped semantic diagnostics, and schema compatibility changes while you edit; use `skelc check` and `skelc schema diff` for reproducible terminal and CI validation. Decorator completion is filtered by the following target and omits decorators already present on it. Deprecated declarations and elements are identified in completion, hover, and symbol views.
 
+When the configured skelc executable is replaced, the plugin offers **Restart Now** or **Later** after verifying the replacement. The running server continues until you choose to restart; choosing Later suppresses further prompts for that same update. Detection uses directory change notifications and a check when the editor regains focus, without periodic polling. Symbolic links and their resolved targets are monitored. No IDE restart is required.
+
 ## Configuration
 
 | Setting | Default | Description |

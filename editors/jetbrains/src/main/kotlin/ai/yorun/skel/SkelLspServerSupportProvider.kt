@@ -33,7 +33,12 @@ class SkelLspServerDescriptor(project: Project) : ProjectWideLspServerDescriptor
     override fun isSupportedFile(file: VirtualFile) = SkelLspServerSupportProvider.supports(file)
     override fun getLanguageId(file: VirtualFile) = "skel"
     override fun createCommandLine() = if (TrustedProjects.isProjectTrusted(project) && options.enabled) {
-        SkelServerCommand.verified(options.executable, project.basePath)
+        val executable = SkelServerCommand.normalize(options.executable)
+        val stamp = executableStamp(executable, project.basePath,
+            SkelServerCommand.command(executable, "lsp", project.basePath).effectiveEnvironment)
+        SkelServerCommand.verified(executable, project.basePath).also {
+            project.getService(SkelExecutableMonitor::class.java).start(executable, stamp)
+        }
     } else {
         throw ExecutionException("Skel language server is disabled or the project is not trusted.")
     }

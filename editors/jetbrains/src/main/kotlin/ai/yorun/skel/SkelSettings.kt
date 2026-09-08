@@ -73,6 +73,7 @@ class SkelConfigurable(private val project: Project) : Configurable {
     override fun isModified() = panel != null && edited() != settings.state
     override fun apply() {
         if (!isModified) return
+        project.getService(SkelExecutableMonitor::class.java).stop()
         settings.loadState(edited())
         LspServerManager.getInstance(project).stopAndRestartIfNeeded(SkelLspServerSupportProvider::class.java)
     }
