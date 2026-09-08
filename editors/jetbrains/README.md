@@ -37,6 +37,8 @@ Open a `.skel` file in a trusted project. The plugin starts `skelc version` with
 
 If startup fails, check the Language Services widget, executable path, and `skelc version`. Protocol logging is available through **Help | Diagnostic Tools | Debug Log Settings** by adding `#com.intellij.platform.lsp`; logs are in the IDE log directory. Never share logs without reviewing their contents.
 
+When the configured skelc executable is replaced, the plugin offers **Restart Now** or **Later** after verifying the replacement. The running server continues until you choose to restart; choosing Later suppresses further prompts for that same update. Detection uses directory change notifications and a check when the editor regains focus, without periodic polling. Symbolic links and their resolved targets are monitored. No IDE restart is required.
+
 ## Development
 
 Prerequisites: Node.js 22+, JDK 21, and a compatible skelc for integration tests. Gradle is pinned through the checked-in wrapper. From the repository root run `npm ci` and `npm run check`, then:
