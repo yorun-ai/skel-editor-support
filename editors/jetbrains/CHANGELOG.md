@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-09-08
+
+### Added
+
+- Offer Restart Now or Later when the configured skelc executable is replaced, after validating the updated executable.
+- Detect executable and symbolic-link target changes through directory notifications and a check when the editor regains focus, without periodic polling.
+- Suppress repeated prompts for the same update and keep the current language server running if the replacement cannot be validated.
+
+### Compatibility
+
+- The minimum supported skelc remains v0.14.0.
+
 ## [0.12.0] - 2026-09-07
 
 ### Fixed
