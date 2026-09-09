@@ -4,6 +4,8 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-09
+
 ### Added
 
 - Highlight the `open` service modifier.
