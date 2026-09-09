@@ -1,6 +1,6 @@
 domain demo.api
 
-api service HealthService {
+api service HealthApiService {
     noauth
     method ping {}
 }
