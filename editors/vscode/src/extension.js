@@ -29,7 +29,7 @@ function createClient(command) {
   return new LanguageClient(
     "skelc",
     "Skel Language Server",
-    server.serverOptions(command),
+    server.serverOptions(command, vscode.workspace.getConfiguration("skelc").get("strict", false)),
     {
       documentSelector: [
         { language: "skel", scheme: "file" },
@@ -169,7 +169,7 @@ async function activate(context) {
       }
     }),
     vscode.workspace.onDidChangeConfiguration((event) => {
-      if (event.affectsConfiguration("skelc.path")) {
+      if (event.affectsConfiguration("skelc.path") || event.affectsConfiguration("skelc.strict")) {
         void restartClient();
       }
       if (event.affectsConfiguration("skelc.schemaCompatibility") && client) {

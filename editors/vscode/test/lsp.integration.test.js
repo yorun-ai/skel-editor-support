@@ -370,3 +370,39 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
     }
   }
 });
+
+test("API syntax and strict diagnostics work with the current compiler", {
+  skip: !process.env.SKELC_PATH,
+  timeout: 20000
+}, async (t) => {
+  const featureProbe = childProcess.spawnSync(process.env.SKELC_PATH, ["version", "--features"], { encoding: "utf8", timeout: 5000 });
+  if (featureProbe.status !== 0 || !JSON.parse(featureProbe.stdout).features?.apiModifier) {
+    t.skip("This compiler predates API services and strict mode");
+    return;
+  }
+  const fixture = path.resolve(__dirname, "../../../packages/highlight/test/fixtures/api.skel");
+  const result = childProcess.spawnSync(process.env.SKELC_PATH, ["--strict", "check", "--skel-in", fixture], { encoding: "utf8", timeout: 5000 });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout).diagnostics, []);
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "skel-strict-lsp-"));
+  const { serverOptions } = require("../src/server");
+  const options = serverOptions(process.env.SKELC_PATH, true);
+  const child = childProcess.spawn(options.command, options.args, { stdio: ["pipe", "pipe", "pipe"] });
+  const peer = new LSPPeer(child.stdin, child.stdout);
+  const uri = pathToFileURL(path.join(workspace, "legacy.skel")).href;
+  try {
+    await peer.request("initialize", { processId: process.pid, rootUri: pathToFileURL(workspace).href, capabilities: {} });
+    peer.notify("initialized", {});
+    peer.notify("textDocument/didOpen", { textDocument: { uri, languageId: "skel", version: 1, text: "domain demo\nservice HealthService { method ping {} }\n" } });
+    const strict = await peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri && p.diagnostics.some(d => d.severity === 1));
+    const codes = strict.diagnostics.filter(d => d.severity === 1).map(d => d.code);
+    peer.notify("workspace/didChangeConfiguration", { settings: { strict: false } });
+    await peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri && codes.every(code => p.diagnostics.some(d => d.code === code && d.severity === 2)));
+    await peer.request("shutdown", null);
+    peer.notify("exit");
+    await waitForExit(child, 5000);
+  } finally {
+    if (child.exitCode === null) child.kill();
+    fs.rmSync(workspace, { recursive: true, force: true });
+  }
+});

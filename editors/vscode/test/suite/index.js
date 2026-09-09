@@ -54,6 +54,27 @@ async function run() {
   );
   assert.equal(secondPreview, firstPreview);
   assert.equal(secondPreview.uri.toString(), firstPreview.uri.toString());
+
+  const probe = require("node:child_process").spawnSync(process.env.SKELC_PATH, ["version", "--features"], { encoding: "utf8", timeout: 5000 });
+  if (probe.status === 0 && JSON.parse(probe.stdout).features?.apiModifier) {
+    await replaceDocument(source, "domain demo\nservice HealthService { method ping {} }\n");
+    await waitForDiagnostic(source, vscode.DiagnosticSeverity.Warning);
+    await vscode.workspace.getConfiguration("skelc").update("strict", true, vscode.ConfigurationTarget.Workspace);
+    await waitForDiagnostic(source, vscode.DiagnosticSeverity.Error);
+    await vscode.workspace.getConfiguration("skelc").update("strict", false, vscode.ConfigurationTarget.Workspace);
+    await waitForDiagnostic(source, vscode.DiagnosticSeverity.Warning);
+  }
+
+}
+
+async function waitForDiagnostic(document, severity) {
+  const deadline = Date.now() + 10000;
+  while (Date.now() < deadline) {
+    if (vscode.languages.getDiagnostics(document.uri).some(d =>
+      String(d.code).includes("service") && d.severity === severity)) return;
+    await new Promise(resolve => setTimeout(resolve, 25));
+  }
+  throw new Error(`Timed out waiting for service diagnostic severity ${severity}: ${JSON.stringify(vscode.languages.getDiagnostics(document.uri))}`);
 }
 
 async function replaceDocument(document, content) {

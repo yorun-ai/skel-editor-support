@@ -63,3 +63,10 @@ test("verifyServer explains a missing executable", async () => {
     /Cannot run missing-skelc: the executable was not found/
   );
 });
+
+test("strict mode starts the server with a separate global flag", () => {
+  assert.deepEqual(server.serverOptions(" /tools with spaces/skelc ", true), {
+    command: "/tools with spaces/skelc", args: ["--strict", "lsp"]
+  });
+  assert.deepEqual(server.serverOptions("skelc", false).args, ["lsp"]);
+});

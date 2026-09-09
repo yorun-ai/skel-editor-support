@@ -13,10 +13,10 @@ function normalizeCommand(value) {
   return value.trim();
 }
 
-function serverOptions(command) {
+function serverOptions(command, strict = false) {
   return {
     command: normalizeCommand(command),
-    args: ["lsp"]
+    args: strict ? ["--strict", "lsp"] : ["lsp"]
   };
 }
 
