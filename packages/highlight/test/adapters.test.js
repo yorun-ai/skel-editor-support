@@ -165,7 +165,7 @@ test("API service modifiers are highlighted across frontend adapters", async () 
     getValue: () => 20000, onDidChangeConfiguration: () => ({ dispose() {} })
   });
   try {
-    const result = tokenizer.tokenize("api service HealthService {", true, tokenizer.getInitialState());
+    const result = tokenizer.tokenize("api service HealthApiService {", true, tokenizer.getInitialState());
     assert.ok(result.tokens.some(token => token.offset === 0 && token.type === "keyword.skel"));
   } finally { tokenizer.dispose(); }
   const starryNight = await createStarryNight([skelStarryNight]);
