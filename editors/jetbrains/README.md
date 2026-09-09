@@ -33,6 +33,8 @@ skelc version
 
 Open **Settings | Languages & Frameworks | Skel** and set the executable to `skelc` or an absolute path. Do not add arguments or surrounding shell quotes. Saving settings restarts the server for this project. Schema baseline paths resolve from the domain source directory, not the IDE project root.
 
+Enable **Strict mode** in the same settings page to treat migration warnings as errors. It is disabled by default and requires skelc v0.18.0 or newer; saving restarts the server. API service diagnostics and completion also require v0.18.0 or newer, while `api` highlighting works independently of skelc.
+
 Open a `.skel` file in a trusted project. The plugin starts `skelc version` with a five-second timeout, validates compatibility, and then starts `skelc lsp` over standard input/output. If you trust a previously untrusted project after opening the file, use **Tools | Restart Skel Language Server**.
 
 If startup fails, check the Language Services widget, executable path, and `skelc version`. Protocol logging is available through **Help | Diagnostic Tools | Debug Log Settings** by adding `#com.intellij.platform.lsp`; logs are in the IDE log directory. Never share logs without reviewing their contents.

@@ -32,7 +32,6 @@ pub actor ClientActor {
 }
 
 pub service UserService {
-    for ClientActor via client
 
     @desc("""
     Find a user

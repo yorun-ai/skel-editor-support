@@ -23,7 +23,8 @@ class SkelSettings : PersistentStateComponent<SkelSettings.Options> {
         var enabled: Boolean = true,
         var compatibilityDiagnostics: Boolean = true,
         var includeCompatible: Boolean = false,
-        var baseline: String = ""
+        var baseline: String = "",
+        var strict: Boolean = false
     ) {
         fun compatibilityOptions(): Map<String, Any> = mapOf(
             "diagnostics" to compatibilityDiagnostics,
@@ -42,6 +43,7 @@ class SkelConfigurable(private val project: Project) : Configurable {
     private var panel: JPanel? = null
     private var executable: JBTextField? = null
     private var enabled: JBCheckBox? = null
+    private var strict: JBCheckBox? = null
     private var diagnostics: JBCheckBox? = null
     private var compatible: JBCheckBox? = null
     private var baseline: JBTextField? = null
@@ -51,11 +53,12 @@ class SkelConfigurable(private val project: Project) : Configurable {
     override fun createComponent(): JComponent {
         executable = JBTextField()
         enabled = JBCheckBox("Enable skelc language server")
+        strict = JBCheckBox("Strict mode (requires skelc v0.18.0 or newer)")
         diagnostics = JBCheckBox("Report schema compatibility changes")
         compatible = JBCheckBox("Include compatible changes as hints")
         baseline = JBTextField()
         panel = FormBuilder.createFormBuilder()
-            .addComponent(enabled!!)
+            .addComponent(enabled!!).addComponent(strict!!)
             .addLabeledComponent("skelc executable:", executable!!)
             .addComponent(JLabel("Use skelc from PATH or an absolute executable path (no arguments)."))
             .addComponent(JLabel("Requires ${SkelVocabulary.minimumVersion} or newer. Highlighter works without skelc."))
@@ -68,7 +71,8 @@ class SkelConfigurable(private val project: Project) : Configurable {
     }
     private fun edited() = SkelSettings.Options(
         SkelServerCommand.normalize(executable?.text.orEmpty()), enabled?.isSelected ?: true,
-        diagnostics?.isSelected ?: true, compatible?.isSelected ?: false, baseline?.text.orEmpty().trim()
+        diagnostics?.isSelected ?: true, compatible?.isSelected ?: false, baseline?.text.orEmpty().trim(),
+        strict?.isSelected ?: false
     )
     override fun isModified() = panel != null && edited() != settings.state
     override fun apply() {
@@ -81,12 +85,13 @@ class SkelConfigurable(private val project: Project) : Configurable {
         val state = settings.state
         executable?.text = state.executable
         enabled?.isSelected = state.enabled
+        strict?.isSelected = state.strict
         diagnostics?.isSelected = state.compatibilityDiagnostics
         compatible?.isSelected = state.includeCompatible
         baseline?.text = state.baseline
     }
     override fun disposeUIResources() {
-        panel = null; executable = null; enabled = null
+        panel = null; executable = null; enabled = null; strict = null
         diagnostics = null; compatible = null; baseline = null
     }
 }

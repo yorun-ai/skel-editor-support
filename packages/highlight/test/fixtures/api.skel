@@ -1,0 +1,6 @@
+domain demo.api
+
+api service HealthService {
+    noauth
+    method ping {}
+}

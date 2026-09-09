@@ -19,6 +19,12 @@ class SkelLexerTest {
         return result
     }
 
+    @Test fun apiServiceModifier() {
+        val fixture = javaClass.getResource("/api.skel")!!.readText()
+        assertEquals(SkelTokens.KEYWORD, tokens(fixture).first { it.second == "api" }.first)
+        assertEquals(SkelTokens.IDENTIFIER, tokens("api: string").first().first)
+    }
+
     @Test fun sharedVocabulary() {
         for (word in SkelVocabulary.keywords) assertEquals(SkelTokens.KEYWORD, tokens(word).single().first)
         for (word in SkelVocabulary.builtinTypes) assertEquals(SkelTokens.TYPE, tokens(word).single().first)

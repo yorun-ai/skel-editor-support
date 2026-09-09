@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-09
+
+### Added
+
+- Highlight the `api` modifier in service declarations.
+- Add an optional strict-mode setting that restarts skelc with `--strict lsp`; it is disabled by default.
+
+### Compatibility
+
+- The minimum supported skelc remains v0.14.0. API service language intelligence and strict mode require skelc v0.18.0 or newer.
+
 ## [0.12.1] - 2026-09-08
 
 ### Added

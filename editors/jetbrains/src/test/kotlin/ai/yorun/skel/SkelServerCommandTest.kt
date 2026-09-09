@@ -19,6 +19,13 @@ class SkelServerCommandTest {
         assertEquals(listOf("lsp"), command.parametersList.list)
         assertEquals("skelc", SkelServerCommand.normalize("  "))
     }
+    @Test fun strictModeUsesSeparateArgumentsAndDefaultsOff() {
+        assertFalse(SkelSettings.Options().strict)
+        val command = SkelServerCommand.languageServerCommand("/tools with spaces/skelc", null, true)
+        assertEquals("/tools with spaces/skelc", command.exePath)
+        assertEquals(listOf("--strict", "lsp"), command.parametersList.list)
+        assertEquals(listOf("lsp"), SkelServerCommand.languageServerCommand("skelc", null).parametersList.list)
+    }
     @Test fun parsesActualVersionShape() {
         assertEquals("v0.15.0", SkelServerCommand.versionFromJson("""{"name":"Skelc CLI","version":"v0.15.0"}"""))
     }

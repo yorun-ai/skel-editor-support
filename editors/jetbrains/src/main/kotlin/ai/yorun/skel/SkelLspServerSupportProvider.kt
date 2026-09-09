@@ -36,7 +36,7 @@ class SkelLspServerDescriptor(project: Project) : ProjectWideLspServerDescriptor
         val executable = SkelServerCommand.normalize(options.executable)
         val stamp = executableStamp(executable, project.basePath,
             SkelServerCommand.command(executable, "lsp", project.basePath).effectiveEnvironment)
-        SkelServerCommand.verified(executable, project.basePath).also {
+        SkelServerCommand.verified(executable, project.basePath, options.strict).also {
             project.getService(SkelExecutableMonitor::class.java).start(executable, stamp)
         }
     } else {

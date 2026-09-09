@@ -35,11 +35,14 @@ The extension supports VS Code 1.91 or newer and requires `skelc v0.14.0` or new
 
 When the configured skelc executable is replaced, the plugin offers **Restart Now** or **Later** after verifying the replacement. The running server continues until you choose to restart; choosing Later suppresses further prompts for that same update. Detection uses directory change notifications and a check when the editor regains focus, without periodic polling. Symbolic links and their resolved targets are monitored. No IDE restart is required.
 
+Use skelc v0.18.0 or newer for `api service` diagnostics and completion. Syntax highlighting recognizes `api` independently of the installed compiler.
+
 ## Configuration
 
 | Setting | Default | Description |
 | --- | --- | --- |
 | `skelc.path` | `skelc` | Executable used to start the language server. Changing it restarts the server. |
+| `skelc.strict` | `false` | Treat migration warnings as errors with skelc v0.18.0 or newer. Changing it restarts the server. |
 | `skelc.trace.server` | `off` | Protocol tracing: `off`, `messages`, or `verbose`. |
 | `skelc.schemaCompatibility.diagnostics` | `true` | Report breaking and dangerous schema changes while editing. |
 | `skelc.schemaCompatibility.includeCompatible` | `false` | Also report compatible changes as hints. |

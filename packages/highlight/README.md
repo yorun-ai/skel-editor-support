@@ -2,6 +2,8 @@
 
 Frontend syntax-highlighting definitions for the Skel contract language. The package supports Shiki, PrismJS, Highlight.js, Monaco Editor, Starry Night, and CodeMirror 6. Its TextMate grammar is the canonical lexical definition shared with the VS Code extension.
 
+The `api` modifier is highlighted in API service declarations.
+
 Field names such as `data: list<TItem>` are distinguished from declaration keywords such as `data PageResp<TItem>` across the adapters.
 
 Install the package with only the highlighter used by your application. All highlighter peer dependencies are optional.

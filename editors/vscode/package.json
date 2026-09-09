@@ -144,6 +144,12 @@
           "default": "",
           "scope": "window",
           "description": "Explicit baseline Skel file or directory, resolved relative to the domain source directory. Leave empty to use the same directory at Git HEAD."
+        },
+        "skelc.strict": {
+          "type": "boolean",
+          "default": false,
+          "scope": "window",
+          "description": "Treat Skel migration warnings as errors (requires skelc v0.18.0 or newer). Changes restart the language server."
         }
       }
     }

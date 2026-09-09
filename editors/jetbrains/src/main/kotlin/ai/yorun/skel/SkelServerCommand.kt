@@ -33,7 +33,12 @@ internal object SkelServerCommand {
             .withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE)
             .apply { if (workDirectory != null) withWorkDirectory(workDirectory) }
 
-    fun verified(executable: String, workDirectory: String?): GeneralCommandLine {
+    fun languageServerCommand(executable: String, workDirectory: String?, strict: Boolean = false): GeneralCommandLine =
+        command(executable, if (strict) "--strict" else "lsp", workDirectory).apply {
+            if (strict) addParameter("lsp")
+        }
+
+    fun verified(executable: String, workDirectory: String?, strict: Boolean = false): GeneralCommandLine {
         val output = try {
             CapturingProcessHandler(command(executable, "version", workDirectory)).runProcess(5000)
         } catch (error: ExecutionException) {
@@ -46,6 +51,6 @@ internal object SkelServerCommand {
         if (!supports(version)) {
             throw ExecutionException("skelc $version is unsupported; ${SkelVocabulary.minimumVersion} or newer is required.")
         }
-        return command(executable, "lsp", workDirectory)
+        return languageServerCommand(executable, workDirectory, strict)
     }
 }

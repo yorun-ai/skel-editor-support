@@ -149,3 +149,25 @@ test("Monaco tokenizes keyword-named fields as identifiers", () => {
     tokenizer.dispose();
   }
 });
+
+test("API service modifiers are highlighted across frontend adapters", async () => {
+  const source = await readFile(new URL("./fixtures/api.skel", import.meta.url), "utf8");
+  assert.match(Prism.highlight(source, skelPrism, "skel"), /token keyword">api<\/span>/);
+  const instance = hljs.newInstance();
+  instance.registerLanguage("skel", skelHighlightJs);
+  assert.match(instance.highlight(source, { language: "skel" }).value, /hljs-keyword">api<\/span>/);
+  const tokens = [];
+  highlightTree(skelLanguage.parser.parse(source), classHighlighter, (from, to, classes) => {
+    tokens.push({ value: source.slice(from, to), classes });
+  });
+  assert.ok(tokens.some(token => token.value === "api" && token.classes === "tok-keyword"));
+  const tokenizer = new MonarchTokenizer({}, {}, "skel", compileMonarch("skel", skelMonarch), {
+    getValue: () => 20000, onDidChangeConfiguration: () => ({ dispose() {} })
+  });
+  try {
+    const result = tokenizer.tokenize("api service HealthService {", true, tokenizer.getInitialState());
+    assert.ok(result.tokens.some(token => token.offset === 0 && token.type === "keyword.skel"));
+  } finally { tokenizer.dispose(); }
+  const starryNight = await createStarryNight([skelStarryNight]);
+  assert.match(JSON.stringify(starryNight.highlight(source, "source.skel")), /pl-k/);
+});

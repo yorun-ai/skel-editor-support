@@ -140,7 +140,7 @@
       "patterns": [
         {
           "name": "meta.definition.skel",
-          "match": "^\\s*(?:(pub)\\s+)?(enum|data|config|actor|resource|service|web|event|task)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "match": "^\\s*(?:(pub|api)\\s+)?(enum|data|config|actor|resource|service|web|event|task)\\s+([A-Za-z_][A-Za-z0-9_]*)",
           "captures": {
             "1": {
               "name": "storage.modifier.public.skel"
@@ -306,7 +306,7 @@
       "patterns": [
         {
           "name": "keyword.control.skel",
-          "match": "\\b(pub|domain|import|as|via|for|auth|noauth|permission|credential|info|method|require|trigger|input|output|payload|resource|action|check|all|any|client|agent|openapi|eternal|instant)\\b"
+          "match": "\\b(pub|api|domain|import|as|via|for|auth|noauth|permission|credential|info|method|require|trigger|input|output|payload|resource|action|check|all|any|client|agent|openapi|eternal|instant)\\b"
         }
       ]
     },
