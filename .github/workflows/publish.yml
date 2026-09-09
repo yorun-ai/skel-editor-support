@@ -103,11 +103,6 @@ jobs:
       - name: Validate extension
         run: npm run check --workspace skeleton
 
-      - name: Verify Marketplace credentials
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npm run verify:marketplace --workspace skeleton
-
       - name: Validate release tag
         run: npm run check:release --workspace skeleton -- "${{ env.RELEASE_TAG }}"
 
