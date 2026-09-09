@@ -33,7 +33,7 @@ skelc version
 
 Open **Settings | Languages & Frameworks | Skel** and set the executable to `skelc` or an absolute path. Do not add arguments or surrounding shell quotes. Saving settings restarts the server for this project. Schema baseline paths resolve from the domain source directory, not the IDE project root.
 
-Enable **Strict mode** in the same settings page to treat migration warnings as errors. It is disabled by default and requires skelc v0.18.0 or newer; saving restarts the server. API service diagnostics and completion also require v0.18.0 or newer, while `api` highlighting works independently of skelc.
+Enable **Strict mode** in the same settings page to treat migration warnings as errors. It is disabled by default and requires skelc v0.18.0 or newer; saving restarts the server. API service diagnostics and completion also require v0.18.0 or newer. `open service` language intelligence requires v0.19.0 or newer, while `api` and `open` highlighting work independently of skelc.
 
 Open a `.skel` file in a trusted project. The plugin starts `skelc version` with a five-second timeout, validates compatibility, and then starts `skelc lsp` over standard input/output. If you trust a previously untrusted project after opening the file, use **Tools | Restart Skel Language Server**.
 

@@ -4,6 +4,14 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Highlight the `open` service modifier.
+
+### Compatibility
+
+- `open service` language intelligence requires skelc v0.19.0 or newer; syntax highlighting works independently of the installed compiler.
+
 ## [0.13.0] - 2026-09-09
 
 ### Added

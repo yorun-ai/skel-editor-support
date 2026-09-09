@@ -37,6 +37,7 @@ test("TextMate grammar recognizes representative Skel constructs", async () => {
     ["import demo.shared as shared", "keyword.control.import.skel"],
     ["pub data User {", "entity.name.type.skel"],
     ["api service OrderApiService {", "entity.name.type.skel"],
+    ["open service StorageService {", "entity.name.type.skel"],
     ["    id: int", "support.type.skel"],
     ["    method getUser {", "entity.name.function.method.skel"],
     ["// contract comment", "comment.line.double-slash.skel"],
@@ -91,12 +92,14 @@ test("TextMate distinguishes data declarations from data fields", async () => {
   assert.ok(!dataScopes[1].some((scope) => scope.startsWith("keyword.")));
 });
 
-test("TextMate highlights the API modifier without treating api fields as keywords", async () => {
+test("TextMate highlights service modifiers without treating keyword-named fields as keywords", async () => {
   const grammar = await loadGrammar();
   for (const [line, word, scope] of [
     ["api service HealthApiService {", "api", "storage.modifier.public.skel"],
+    ["open service StorageService {", "open", "storage.modifier.public.skel"],
     ["api service HealthApiService {", "HealthApiService", "entity.name.type.skel"],
-    ["  api: string", "api", "variable.other.member.skel"]
+    ["  api: string", "api", "variable.other.member.skel"],
+    ["  open: string", "open", "variable.other.member.skel"]
   ]) {
     const result = grammar.tokenizeLine(line, textmate.INITIAL);
     assert.ok(result.tokens.some(token => line.slice(token.startIndex, token.endIndex) === word && token.scopes.includes(scope)), line);

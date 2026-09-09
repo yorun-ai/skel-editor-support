@@ -5,7 +5,7 @@ const entryKeywords = Object.freeze([
 const declarationKeywords = Object.freeze(["domain", "import", ...entryKeywords]);
 
 const controlKeywords = Object.freeze([
-  "pub", "api", "as", "via", "for", "auth", "noauth", "permission", "credential", "info", "method", "require",
+  "pub", "api", "open", "as", "via", "for", "auth", "noauth", "permission", "credential", "info", "method", "require",
   "trigger", "input", "output", "payload", "action", "check", "all", "any", "client", "agent", "openapi",
   "eternal", "instant"
 ]);

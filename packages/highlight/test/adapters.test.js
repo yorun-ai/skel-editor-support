@@ -150,24 +150,33 @@ test("Monaco tokenizes keyword-named fields as identifiers", () => {
   }
 });
 
-test("API service modifiers are highlighted across frontend adapters", async () => {
+test("service modifiers are highlighted across frontend adapters", async () => {
   const source = await readFile(new URL("./fixtures/api.skel", import.meta.url), "utf8");
-  assert.match(Prism.highlight(source, skelPrism, "skel"), /token keyword">api<\/span>/);
+  const modifiers = [
+    ["api service HealthApiService {", "api"],
+    ["open service StorageService {", "open"]
+  ];
   const instance = hljs.newInstance();
   instance.registerLanguage("skel", skelHighlightJs);
-  assert.match(instance.highlight(source, { language: "skel" }).value, /hljs-keyword">api<\/span>/);
-  const tokens = [];
-  highlightTree(skelLanguage.parser.parse(source), classHighlighter, (from, to, classes) => {
-    tokens.push({ value: source.slice(from, to), classes });
-  });
-  assert.ok(tokens.some(token => token.value === "api" && token.classes === "tok-keyword"));
   const tokenizer = new MonarchTokenizer({}, {}, "skel", compileMonarch("skel", skelMonarch), {
     getValue: () => 20000, onDidChangeConfiguration: () => ({ dispose() {} })
   });
   try {
-    const result = tokenizer.tokenize("api service HealthApiService {", true, tokenizer.getInitialState());
-    assert.ok(result.tokens.some(token => token.offset === 0 && token.type === "keyword.skel"));
+    for (const [line, modifier] of modifiers) {
+      assert.match(Prism.highlight(line, skelPrism, "skel"), new RegExp(`token keyword">${modifier}</span>`));
+      assert.match(instance.highlight(line, { language: "skel" }).value, new RegExp(`hljs-keyword">${modifier}</span>`));
+
+      const tokens = [];
+      highlightTree(skelLanguage.parser.parse(line), classHighlighter, (from, to, classes) => {
+        tokens.push({ value: line.slice(from, to), classes });
+      });
+      assert.ok(tokens.some(token => token.value === modifier && token.classes === "tok-keyword"));
+
+      const result = tokenizer.tokenize(line, true, tokenizer.getInitialState());
+      assert.ok(result.tokens.some(token => token.offset === 0 && token.type === "keyword.skel"));
+    }
   } finally { tokenizer.dispose(); }
   const starryNight = await createStarryNight([skelStarryNight]);
   assert.match(JSON.stringify(starryNight.highlight(source, "source.skel")), /pl-k/);
+  assert.match(JSON.stringify(starryNight.highlight("open service StorageService {", "source.skel")), /pl-k/);
 });
