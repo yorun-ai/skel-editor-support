@@ -103,22 +103,22 @@ Maintainers will review compatibility-sensitive changes to extension identity, s
 
 ## CI scope
 
-PRs and pushes to main use the same changed-file rules. Every run reports `CI / Required Checks`; the lightweight scope and release-policy tests always run so branch protection does not wait on a missing check.
+PRs use changed-file rules; main and tag pushes do not trigger CI. Every run reports `CI / Required Checks`; the lightweight scope and release-policy tests always run so branch protection does not wait on a missing check.
 
 | Changed files | Automatic checks |
 | --- | --- |
 | Documentation and unrelated files | CI policy tests only |
 | Workflow YAML / actionlint configuration | CI policy tests and actionlint; no application suites |
-| JetBrains code/build inputs | Baseline Java 21 plugin tests and optional-signing regression checks |
-| VS Code runtime/configuration/tests | VS Code package checks and minimum skelc LSP/Extension Host tests |
+| JetBrains code/build inputs | Java 21 plugin tests, optional-signing regression checks and Plugin Verifier |
+| VS Code runtime/configuration/tests | VS Code package checks and minimum/latest skelc LSP/Extension Host tests |
 | VS Code assets/themes | VS Code package checks only |
-| Frontend highlighter adapters | Highlighter package checks only |
+| Frontend highlighter adapters | Highlighter package checks and Node/peer compatibility matrix |
 | Shared vocabulary | Highlighter, VS Code package checks and JetBrains tests |
 | Shared highlighter fixtures | Highlighter checks and JetBrains tests |
 | TextMate grammar | Highlighter and VS Code checks |
 | skelc compatibility manifest | VS Code and JetBrains checks |
 | Root npm manifests/lockfile or asset preparation | Both npm packages and VS Code integration; no Gradle |
 
-PRs use the baseline checks above. Main pushes strengthen only the selected components: highlighter compatibility matrix, minimum/latest skelc for VS Code, and the JetBrains Plugin Verifier matrix. Manual CI with `full=true` selects every component and its full matrix; the default manual run checks only the selected commit's changes at baseline depth. Main pushes compare before/after revisions; PRs compare against their merge base. See [CI and release lifecycle](.github/CI.md) for tag, Release and recovery behavior.
+Every selected component runs its compatibility checks before merging: highlighter Node/peer matrix, minimum/latest skelc for VS Code, and JetBrains Plugin Verifier. Manual CI with `full=true` selects every component; the default manual run selects only the commit's changed components, with the same check depth. PRs compare against their merge base. See [CI and release lifecycle](.github/CI.md) for tag, Release and recovery behavior.
 
 The required check rejects failures, cancellations and unexpectedly skipped jobs. Add new build inputs/components to `scripts/ci-scope.mjs` with regression tests; do not broaden unrelated changes into a full test run.

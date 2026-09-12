@@ -51,7 +51,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for repository boundaries, validation com
 
 Source manifests use `0.0.0` as a development placeholder. Publishing a GitHub Release with a `v<version>` tag applies that version to every workspace package in the temporary Actions checkout before validation and packaging.
 
-See [CI and release lifecycle](.github/CI.md) for required main CI, tag behavior and single-channel release recovery.
+See [CI and release lifecycle](.github/CI.md) for required PR checks, tag behavior and single-channel release recovery.
 
 ## License
 
