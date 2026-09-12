@@ -27,12 +27,11 @@ env:
 
 jobs:
   validate:
-    name: Validate published release and main CI
+    name: Validate published release
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: read
-      actions: read
     outputs:
       commit: ${{ steps.release.outputs.commit }}
       vscode: ${{ steps.release.outputs.vscode }}

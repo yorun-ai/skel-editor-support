@@ -46,10 +46,10 @@ test('full verification requires an explicit opt-in', () => {
   assert.ok(Object.values(classifyChanges([], true)).every(Boolean));
   assert.deepEqual(active([]), []);
 });
-test('CLI treats pushes and PRs identically and handles NUL-separated paths', () => {
+test('CLI handles PR and manual NUL-separated paths', () => {
   const directory = mkdtempSync(join(tmpdir(), 'skel-ci-scope-'));
   try {
-    for (const event of ['push', 'pull_request', 'workflow_dispatch']) {
+    for (const event of ['pull_request', 'workflow_dispatch']) {
       const output = join(directory, event);
       const result = spawnSync(process.execPath, ['scripts/ci-scope.mjs'], {
         input: 'editors/vscode/src/new file.js\0README.md\0', encoding: 'utf8',
@@ -65,7 +65,7 @@ test('CLI treats pushes and PRs identically and handles NUL-separated paths', ()
   }
 });
 
-test('workflow diffs PRs, pushes, initial pushes and manual commits without forcing full CI', () => {
+test('workflow diffs PRs and manual commits without forcing all components', () => {
   const directory = mkdtempSync(join(tmpdir(), 'skel-ci-diff-'));
   const workflow = readFileSync('.github/workflows/ci.yml', 'utf8');
   const shell = workflow.split('      - name: Select checks')[1]
@@ -100,8 +100,7 @@ test('workflow diffs PRs, pushes, initial pushes and manual commits without forc
     writeFileSync(join(directory, 'editors/vscode/src/client.js'), '// fixture');
     git('add', '.'); git('commit', '-qm', 'client');
     const head = git('rev-parse', 'HEAD');
-    for (const [event, before] of [['pull_request', base], ['push', base],
-      ['push', '0'.repeat(40)], ['workflow_dispatch', '']]) {
+    for (const [event, before] of [['pull_request', base], ['workflow_dispatch', '']]) {
       const scope = run(event, before, head);
       assert.equal(scope.vscode, 'true');
       assert.equal(scope.jetbrains, 'false');
@@ -113,33 +112,34 @@ test('workflow diffs PRs, pushes, initial pushes and manual commits without forc
   }
 });
 
-test('required gate accepts scoped main matrices and rejects unexpected skips or cancellations', () => {
+test('required gate requires compatibility matrices for selected components', () => {
   const workflow = readFileSync('.github/workflows/ci.yml', 'utf8');
   const shell = workflow.split('      - name: Verify CI results')[1].split('        run: |\n')[1]
     .split('\n').map(line => line.slice(10)).join('\n');
-  for (const extended of [false, true]) {
-    for (const paths of [['.github/workflows/publish.yml'], [], ['editors/jetbrains/src/Test.kt'], ['packages/highlight/src/prism.js'], ['editors/vscode/src/client.js']]) {
-      const scope = classifyChanges(paths);
-      const needs = { changes: { result: 'success', outputs: Object.fromEntries(Object.entries(scope).map(([k, v]) => [k, String(v)])) } };
-      for (const [job, selected] of Object.entries({ check: scope.node, vscode: scope.vscode,
-        workflow: scope.workflow, jetbrains: scope.jetbrains, 'highlight-compatibility': scope.highlight && extended })) {
-        needs[job] = { result: selected ? 'success' : 'skipped' };
+  for (const paths of [['.github/workflows/publish.yml'], [], ['editors/jetbrains/src/Test.kt'], ['packages/highlight/src/prism.js'], ['editors/vscode/src/client.js']]) {
+    const scope = classifyChanges(paths);
+    const needs = { changes: { result: 'success', outputs: Object.fromEntries(Object.entries(scope).map(([k, v]) => [k, String(v)])) } };
+    for (const [job, selected] of Object.entries({ check: scope.node, vscode: scope.vscode,
+      workflow: scope.workflow, jetbrains: scope.jetbrains, 'highlight-compatibility': scope.highlight })) {
+      needs[job] = { result: selected ? 'success' : 'skipped' };
+    }
+    const run = () => spawnSync('bash', ['-eo', 'pipefail', '-c', shell], {
+      encoding: 'utf8', env: { ...process.env, NEEDS: JSON.stringify(needs) },
+    });
+    assert.equal(run().status, 0);
+    for (const job of Object.keys(needs)) {
+      const saved = needs[job].result;
+      for (const result of ['failure', 'cancelled', saved === 'success' ? 'skipped' : 'success']) {
+        needs[job].result = result;
+        assert.notEqual(run().status, 0, `${job}: ${result}`);
       }
-      const run = () => spawnSync('bash', ['-eo', 'pipefail', '-c', shell], {
-        encoding: 'utf8', env: { ...process.env, NEEDS: JSON.stringify(needs), EXTENDED: String(extended) },
-      });
-      assert.equal(run().status, 0);
-      const workflowResult = needs.workflow.result;
-      needs.workflow.result = 'cancelled';
-      assert.notEqual(run().status, 0);
-      needs.workflow.result = scope.workflow ? 'skipped' : 'success';
-      assert.notEqual(run().status, 0);
-      needs.workflow.result = workflowResult;
-      needs.changes.result = 'cancelled';
-      assert.notEqual(run().status, 0);
-      needs.changes.result = 'success';
-      needs.jetbrains.result = scope.jetbrains ? 'skipped' : 'success';
-      assert.notEqual(run().status, 0);
+      needs[job].result = saved;
+    }
+    for (const key of ['workflow', 'node', 'vscode', 'jetbrains', 'highlight']) {
+      const saved = needs.changes.outputs[key];
+      delete needs.changes.outputs[key];
+      assert.notEqual(run().status, 0, `missing ${key}`);
+      needs.changes.outputs[key] = saved;
     }
   }
 });
@@ -149,4 +149,20 @@ test('workflow changes select lint without application suites', () => {
     assert.deepEqual(active([path]), ['workflow']);
   }
   assert.deepEqual(active(['scripts/jetbrains-signing.test.mjs']), ['jetbrains']);
+});
+
+
+test('selected PR components include compatibility checks before merging', () => {
+  const workflow = readFileSync('.github/workflows/ci.yml', 'utf8');
+  const triggers = workflow.split('on:\n')[1].split('\npermissions:')[0];
+  assert.match(triggers, /  pull_request:/);
+  assert.doesNotMatch(triggers, /  push:/);
+  for (const name of ['Check out latest tested skelc', 'Build latest tested skelc language server',
+    'Test latest skelc LSP integration', 'Test latest skelc in Extension Host', 'Verify supported IDEs']) {
+    const step = workflow.split(`      - name: ${name}\n`)[1]?.split('\n      - ')[0];
+    assert.ok(step, name);
+    assert.doesNotMatch(step, /^        if:/m, name);
+  }
+  const highlight = workflow.split('  highlight-compatibility:\n')[1].split('    steps:')[0];
+  assert.match(highlight, /if: needs.changes.outputs.highlight == 'true'\n/);
 });

@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -45,20 +43,19 @@ jobs:
         env:
           CI_EVENT_NAME: ${{ github.event_name }}
           FULL_CI: ${{ github.event_name == 'workflow_dispatch' && inputs.full }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
           if [ "$FULL_CI" = true ]; then
             node scripts/ci-scope.mjs </dev/null
           elif [ "$CI_EVENT_NAME" = pull_request ]; then
             git diff --name-only --no-renames -z "$BASE_SHA...$HEAD_SHA" | node scripts/ci-scope.mjs
-          else
-            if [ "$CI_EVENT_NAME" = workflow_dispatch ]; then
-              BASE_SHA=$(git rev-parse --verify "$HEAD_SHA^" 2>/dev/null || git hash-object -w -t tree /dev/null)
-            elif [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = 0000000000000000000000000000000000000000 ]; then
-              BASE_SHA=$(git hash-object -w -t tree /dev/null)
-            fi
+          elif [ "$CI_EVENT_NAME" = workflow_dispatch ]; then
+            BASE_SHA=$(git rev-parse --verify "$HEAD_SHA^" 2>/dev/null || git hash-object -w -t tree /dev/null)
             git diff --name-only --no-renames -z "$BASE_SHA" "$HEAD_SHA" | node scripts/ci-scope.mjs
+          else
+            echo "Unsupported CI event: $CI_EVENT_NAME" >&2
+            exit 1
           fi
 
   check:
@@ -142,7 +139,7 @@ jobs:
             fi
           }
           resolve_ref minimum "$MINIMUM_VERSION"
-          if [ "${{ github.event_name == 'push' || needs.changes.outputs.full == 'true' }}" = true ]; then resolve_ref latest "$LATEST_VERSION"; fi
+          resolve_ref latest "$LATEST_VERSION"
 
       - name: Check out minimum supported skelc
         uses: actions/checkout@v7
@@ -152,7 +149,6 @@ jobs:
           path: .test/skelc-minimum
 
       - name: Check out latest tested skelc
-        if: (github.event_name == 'push' || needs.changes.outputs.full == 'true')
         uses: actions/checkout@v7
         with:
           repository: yorun-ai/skelc
@@ -162,7 +158,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version-file: ${{ (github.event_name == 'push' || needs.changes.outputs.full == 'true') && '.test/skelc-latest/go.mod' || '.test/skelc-minimum/go.mod' }}
+          go-version-file: .test/skelc-latest/go.mod
           cache-dependency-path: .test/skelc-minimum/go.sum
 
       - name: Build minimum supported skelc language server
@@ -172,7 +168,6 @@ jobs:
         run: GOWORK=off go build -ldflags "$SKELC_LDFLAGS" -o "$RUNNER_TEMP/skelc-minimum" ./cmd/skelc
 
       - name: Build latest tested skelc language server
-        if: (github.event_name == 'push' || needs.changes.outputs.full == 'true')
         working-directory: .test/skelc-latest
         env:
           SKELC_LDFLAGS: ${{ steps.skelc-source.outputs.latest_ldflags }}
@@ -186,7 +181,6 @@ jobs:
 
       - name: Test latest skelc LSP integration
         timeout-minutes: 5
-        if: (github.event_name == 'push' || needs.changes.outputs.full == 'true')
         env:
           SKELC_PATH: ${{ runner.temp }}/skelc-latest
         run: npm run test:integration
@@ -200,7 +194,6 @@ jobs:
 
       - name: Test latest skelc in Extension Host
         timeout-minutes: 10
-        if: (github.event_name == 'push' || needs.changes.outputs.full == 'true')
         env:
           SKELC_PATH: ${{ runner.temp }}/skelc-latest
           VSCODE_VERSION: "1.91.0"
@@ -208,7 +201,7 @@ jobs:
 
   highlight-compatibility:
     needs: changes
-    if: needs.changes.outputs.highlight == 'true' && (github.event_name == 'push' || needs.changes.outputs.full == 'true')
+    if: needs.changes.outputs.highlight == 'true'
     name: Highlight compatibility (Node ${{ matrix.node-version }}, ${{ matrix.peer-set }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -298,7 +291,6 @@ jobs:
         run: xvfb-run -a ./gradlew test
       - name: Verify supported IDEs
         timeout-minutes: 40
-        if: (github.event_name == 'push' || needs.changes.outputs.full == 'true')
         working-directory: editors/jetbrains
         run: ./gradlew verifyPlugin
 
@@ -312,13 +304,14 @@ jobs:
       - name: Verify CI results
         env:
           NEEDS: ${{ toJSON(needs) }}
-          EXTENDED: ${{ github.event_name == 'push' || needs.changes.outputs.full == 'true' }}
         run: |
           echo "$NEEDS" | jq --exit-status '
             .changes.result == "success" and
             (.changes.outputs as $scope |
+              all(["workflow", "node", "vscode", "jetbrains", "highlight"][];
+                . as $key | $scope[$key] == "true" or $scope[$key] == "false") and
               (.workflow.result == (if $scope.workflow == "true" then "success" else "skipped" end)) and
               (.check.result == (if $scope.node == "true" then "success" else "skipped" end)) and
               (.vscode.result == (if $scope.vscode == "true" then "success" else "skipped" end)) and
               (.jetbrains.result == (if $scope.jetbrains == "true" then "success" else "skipped" end)) and
-              (."highlight-compatibility".result == (if $scope.highlight == "true" and env.EXTENDED == "true" then "success" else "skipped" end)))'
+              (."highlight-compatibility".result == (if $scope.highlight == "true" then "success" else "skipped" end)))'
