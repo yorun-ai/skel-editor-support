@@ -375,8 +375,9 @@ test("API syntax and strict diagnostics work with the current compiler", {
   skip: !process.env.SKELC_PATH,
   timeout: 20000
 }, async (t) => {
-  const featureProbe = childProcess.spawnSync(process.env.SKELC_PATH, ["version", "--features"], { encoding: "utf8", timeout: 5000 });
-  if (featureProbe.status !== 0 || !JSON.parse(featureProbe.stdout).features?.apiModifier) {
+  const helpProbe = childProcess.spawnSync(process.env.SKELC_PATH, ["--help"], { encoding: "utf8", timeout: 5000 });
+  assert.equal(helpProbe.status, 0, helpProbe.stdout + helpProbe.stderr);
+  if (!helpProbe.stdout.includes("--strict")) {
     t.skip("This compiler predates API services and strict mode");
     return;
   }
