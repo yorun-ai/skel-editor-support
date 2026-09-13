@@ -55,8 +55,9 @@ async function run() {
   assert.equal(secondPreview, firstPreview);
   assert.equal(secondPreview.uri.toString(), firstPreview.uri.toString());
 
-  const probe = require("node:child_process").spawnSync(process.env.SKELC_PATH, ["version", "--features"], { encoding: "utf8", timeout: 5000 });
-  if (probe.status === 0 && JSON.parse(probe.stdout).features?.apiModifier) {
+  const probe = require("node:child_process").spawnSync(process.env.SKELC_PATH, ["--help"], { encoding: "utf8", timeout: 5000 });
+  assert.equal(probe.status, 0, probe.stdout + probe.stderr);
+  if (probe.stdout.includes("--strict")) {
     await replaceDocument(source, "domain demo\nservice HealthService { method ping {} }\n");
     await waitForDiagnostic(source, vscode.DiagnosticSeverity.Warning);
     await vscode.workspace.getConfiguration("skelc").update("strict", true, vscode.ConfigurationTarget.Workspace);
