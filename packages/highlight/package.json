@@ -76,7 +76,7 @@
     "@codemirror/language": "^6.12.4",
     "@wooorm/starry-night": "^3.10.0",
     "highlight.js": "^11.11.1",
-    "monaco-editor": "^0.56.0",
+    "monaco-editor": "^0.56.0 || ^0.57.0",
     "prismjs": "^1.30.0",
     "shiki": "^4.3.1"
   },
