@@ -267,27 +267,46 @@ jobs:
       - name: Test optional signing configuration
         timeout-minutes: 10
         run: node --test scripts/jetbrains-signing.test.mjs
-      - name: Read minimum supported skelc
+      - name: Read supported skelc versions
         id: compatibility
-        run: echo "version=$(node -p 'require("./editors/vscode/skelc-compatibility.json").minimumVersion')" >> "$GITHUB_OUTPUT"
-      - name: Check out minimum supported skelc
+        run: |
+          echo "minimum=$(node -p 'require("./editors/vscode/skelc-compatibility.json").minimumVersion')" >> "$GITHUB_OUTPUT"
+          echo "latest=$(node -p 'require("./editors/vscode/skelc-compatibility.json").latestTestedVersion')" >> "$GITHUB_OUTPUT"
+      - name: Check out minimum skelc for JetBrains
         uses: actions/checkout@v7
         with:
           repository: yorun-ai/skelc
-          ref: ${{ steps.compatibility.outputs.version }}
-          path: .test/skelc-jetbrains
+          ref: ${{ steps.compatibility.outputs.minimum }}
+          path: .test/skelc-jetbrains-minimum
+      - name: Check out latest skelc for JetBrains
+        uses: actions/checkout@v7
+        with:
+          repository: yorun-ai/skelc
+          ref: ${{ steps.compatibility.outputs.latest }}
+          path: .test/skelc-jetbrains-latest
       - uses: actions/setup-go@v7
         with:
-          go-version-file: .test/skelc-jetbrains/go.mod
-          cache-dependency-path: .test/skelc-jetbrains/go.sum
-      - name: Build skelc
-        working-directory: .test/skelc-jetbrains
-        run: GOWORK=off go build -o "$RUNNER_TEMP/skelc" ./cmd/skelc
-      - name: Test plugin
+          go-version-file: .test/skelc-jetbrains-latest/go.mod
+          cache-dependency-path: |
+            .test/skelc-jetbrains-minimum/go.sum
+            .test/skelc-jetbrains-latest/go.sum
+      - name: Build minimum skelc for JetBrains
+        working-directory: .test/skelc-jetbrains-minimum
+        run: GOWORK=off go build -o "$RUNNER_TEMP/skelc-minimum" ./cmd/skelc
+      - name: Build latest skelc for JetBrains
+        working-directory: .test/skelc-jetbrains-latest
+        run: GOWORK=off go build -o "$RUNNER_TEMP/skelc-latest" ./cmd/skelc
+      - name: Test plugin with minimum skelc
         timeout-minutes: 15
         working-directory: editors/jetbrains
         env:
-          SKELC_PATH: ${{ runner.temp }}/skelc
+          SKELC_PATH: ${{ runner.temp }}/skelc-minimum
+        run: xvfb-run -a ./gradlew test
+      - name: Test plugin with latest skelc
+        timeout-minutes: 15
+        working-directory: editors/jetbrains
+        env:
+          SKELC_PATH: ${{ runner.temp }}/skelc-latest
         run: xvfb-run -a ./gradlew test
       - name: Verify supported IDEs
         timeout-minutes: 40

@@ -105,3 +105,23 @@ test("TextMate highlights service modifiers without treating keyword-named field
     assert.ok(result.tokens.some(token => line.slice(token.startIndex, token.endIndex) === word && token.scopes.includes(scope)), line);
   }
 });
+
+test("TextMate highlights nested config binary values and nullable generic parameters", async () => {
+  const grammar = await loadGrammar();
+  const fixture = fs.readFileSync(path.join(root, "test", "fixtures", "config.skel"), "utf8");
+  const tokens = [];
+  let ruleStack = textmate.INITIAL;
+  for (const line of fixture.split("\n")) {
+    const result = grammar.tokenizeLine(line, ruleStack);
+    ruleStack = result.ruleStack;
+    tokens.push(...result.tokens.map(token => ({ value: line.slice(token.startIndex, token.endIndex), scopes: token.scopes })));
+  }
+  for (const [value, scope] of [
+    ["AssetConfig", "entity.name.type.skel"],
+    ["binary", "support.type.skel"],
+    ["?", "keyword.operator.nullable.skel"],
+    ["sensitive", "entity.name.function.decorator.skel"]
+  ]) {
+    assert.ok(tokens.some(token => token.value === value && token.scopes.includes(scope)), `${value}: ${scope}`);
+  }
+});

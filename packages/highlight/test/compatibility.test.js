@@ -21,31 +21,40 @@ const editingStates = [
   "method find { output map<string,"
 ];
 
-test("all executable adapters accept a broad Skel fixture", async () => {
-  registerSkelPrism(Prism);
-  assert.match(Prism.highlight(fixture, skelPrism, "skel"), /token comment/);
+const configFixture = await readFile(new URL("./fixtures/config.skel", import.meta.url), "utf8");
+for (const [name, source] of [["broad", fixture], ["structured config", configFixture]]) {
+  test(`all executable adapters accept the ${name} Skel fixture`, async () => {
+    const fixture = source;
+    registerSkelPrism(Prism);
+    assert.match(Prism.highlight(fixture, skelPrism, "skel"), /token comment/);
 
-  const highlightJs = hljs.newInstance();
-  highlightJs.registerLanguage("skel", skelHighlightJs);
-  assert.match(highlightJs.highlight(fixture, { language: "skel" }).value, /hljs-comment/);
+    const highlightJs = hljs.newInstance();
+    highlightJs.registerLanguage("skel", skelHighlightJs);
+    assert.match(highlightJs.highlight(fixture, { language: "skel" }).value, /hljs-comment/);
 
-  const starryNight = await createStarryNight([skelStarryNight]);
-  assert.equal(starryNight.highlight(fixture, "source.skel").type, "root");
+    const starryNight = await createStarryNight([skelStarryNight]);
+    assert.equal(starryNight.highlight(fixture, "source.skel").type, "root");
 
-  const shiki = await createHighlighter({ langs: [skelShiki], themes: ["github-dark"] });
-  try {
-    assert.match(shiki.codeToHtml(fixture, { lang: "skel", theme: "github-dark" }), /class="shiki/);
-  } finally {
-    shiki.dispose();
-  }
+    const shiki = await createHighlighter({ langs: [skelShiki], themes: ["github-dark"] });
+    try {
+      assert.match(shiki.codeToHtml(fixture, { lang: "skel", theme: "github-dark" }), /class="shiki/);
+    } finally {
+      shiki.dispose();
+    }
 
-  const codeMirrorTokens = [];
-  highlightTree(skelLanguage.parser.parse(fixture), classHighlighter, (from, to, classes) => {
-    codeMirrorTokens.push({ value: fixture.slice(from, to), classes });
+    const codeMirrorTokens = [];
+    highlightTree(skelLanguage.parser.parse(fixture), classHighlighter, (from, to, classes) => {
+      codeMirrorTokens.push({ value: fixture.slice(from, to), classes });
+    });
+    const builtin = name === "broad" ? "duration" : "binary";
+    assert.ok(codeMirrorTokens.some(({ value, classes }) => value === builtin && classes === "tok-typeName"));
+    if (name === "broad") {
+      assert.ok(codeMirrorTokens.some(({ value, classes }) => value.includes("Find a user") && classes === "tok-string"));
+    } else {
+      assert.ok(codeMirrorTokens.some(({ value, classes }) => value.includes("?") && classes === "tok-operator"));
+    }
   });
-  assert.ok(codeMirrorTokens.some(({ value, classes }) => value === "duration" && classes === "tok-typeName"));
-  assert.ok(codeMirrorTokens.some(({ value, classes }) => value.includes("Find a user") && classes === "tok-string"));
-});
+}
 
 test("highlighters tolerate incomplete editor states", async () => {
   registerSkelPrism(Prism);

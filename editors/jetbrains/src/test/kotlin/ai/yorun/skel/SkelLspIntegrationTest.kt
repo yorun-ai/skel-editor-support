@@ -1,5 +1,6 @@
 package ai.yorun.skel
 
+import com.intellij.execution.process.CapturingProcessHandler
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.launch.LSPLauncher
 import org.eclipse.lsp4j.services.LanguageClient
@@ -12,12 +13,26 @@ import java.util.concurrent.TimeUnit
 
 /** Exercises the production command with the real skelc server and JetBrains' LSP4J. */
 class SkelLspIntegrationTest {
-    @Test fun realServerLifecycleAndEditing() {
+    @Test fun realServerLifecycleAndEditing() = exerciseEditing(
+        "domain example\n\ndata Customer {\n    id: uuid\n}\n", "Customer"
+    )
+
+    @Test fun structuredConfigEditing() {
+        val executable = System.getProperty("skelc.path", "")
+        assumeTrue("Set SKELC_PATH to run real skelc integration", executable.isNotBlank())
+        val output = CapturingProcessHandler(SkelServerCommand.command(executable, "version", null)).runProcess(5000)
+        assertFalse("Version probe timed out", output.isTimeout)
+        assertEquals(output.stderr, 0, output.exitCode)
+        val version = SkelServerCommand.versionFromJson(output.stdout)
+        assumeTrue("Structured configs require skelc v0.23.0 or newer", SkelServerCommand.supports(version, "v0.23.0"))
+        exerciseEditing(javaClass.getResource("/config.skel")!!.readText(), "AssetConfig")
+    }
+
+    private fun exerciseEditing(text: String, symbol: String) {
         val executable = System.getProperty("skelc.path", "")
         assumeTrue("Set SKELC_PATH to run real skelc integration", executable.isNotBlank())
         val directory = Files.createTempDirectory("skel-jetbrains-lsp")
         val file = directory.resolve("example.skel")
-        val text = "domain example\n\ndata Customer {\n    id: uuid\n}\n"
         Files.writeString(file, text)
         val process = SkelServerCommand.verified(executable, directory.toString()).createProcess()
         val diagnostics = LinkedBlockingQueue<PublishDiagnosticsParams>()
@@ -50,7 +65,7 @@ class SkelLspIntegrationTest {
             assertEquals(uri, published!!.uri)
             assertTrue(published.diagnostics.toString(), published.diagnostics.none { it.severity == DiagnosticSeverity.Error })
             val symbols = server.textDocumentService.documentSymbol(DocumentSymbolParams(TextDocumentIdentifier(uri))).get(10, TimeUnit.SECONDS)
-            assertTrue("Expected Customer symbol", symbols.any { if (it.isRight) it.right.name == "Customer" else it.left.name == "Customer" })
+            assertTrue("Expected $symbol symbol", symbols.any { if (it.isRight) it.right.name == symbol else it.left.name == symbol })
             val formatted = server.textDocumentService.formatting(DocumentFormattingParams(TextDocumentIdentifier(uri), FormattingOptions(4, true))).get(10, TimeUnit.SECONDS)
             assertNotNull(formatted)
             diagnostics.clear()
@@ -66,6 +81,7 @@ class SkelLspIntegrationTest {
             server.textDocumentService.didClose(DidCloseTextDocumentParams(TextDocumentIdentifier(uri)))
             server.shutdown().get(10, TimeUnit.SECONDS)
             server.exit()
+            process.outputStream.close()
             assertTrue("Server should exit after shutdown/exit", process.waitFor(10, TimeUnit.SECONDS))
         } finally {
             listening.cancel(true)

@@ -158,7 +158,9 @@ test('selected PR components include compatibility checks before merging', () =>
   assert.match(triggers, /  pull_request:/);
   assert.doesNotMatch(triggers, /  push:/);
   for (const name of ['Check out latest tested skelc', 'Build latest tested skelc language server',
-    'Test latest skelc LSP integration', 'Test latest skelc in Extension Host', 'Verify supported IDEs']) {
+    'Test latest skelc LSP integration', 'Test latest skelc in Extension Host',
+    'Check out latest skelc for JetBrains', 'Build latest skelc for JetBrains',
+    'Test plugin with minimum skelc', 'Test plugin with latest skelc', 'Verify supported IDEs']) {
     const step = workflow.split(`      - name: ${name}\n`)[1]?.split('\n      - ')[0];
     assert.ok(step, name);
     assert.doesNotMatch(step, /^        if:/m, name);
