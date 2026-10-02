@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-02
+
+### Compatibility
+
+- Validate skelc v0.23.0 configs containing nested data, binary values and nullable generic parameters, with shared highlighting and real language-server tests.
+- Test both minimum and latest configured skelc versions. The minimum remains v0.14.0; the new config capabilities require v0.23.0 or newer.
+- Keep the minimum IDE at 2025.2.1 and retain the existing LSP compatibility APIs.
+
+### Maintenance
+
+- Update Kotlin, IntelliJ Platform Gradle plugin and Gradle dependencies.
+- Make test-server shutdown reliable and retain IDE verification before merging and publishing.
+
 ## [0.14.0] - 2026-09-09
 
 ### Added
@@ -61,3 +74,5 @@
 
 - Keep the backward-compatible LSP API and allow newer IDE builds without a fixed upper bound.
 - Verify GoLand and IntelliJ IDEA at 2025.2.1 and 2026.2.2.
+
+[0.15.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.14.0...v0.15.0
