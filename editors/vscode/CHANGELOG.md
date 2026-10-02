@@ -4,6 +4,19 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-10-02
+
+### Compatibility
+
+- Validate language-server integration with skelc v0.23.0, including configs containing nested data, binary values and nullable generic parameters. These config capabilities require skelc v0.23.0 or newer; the minimum supported skelc remains v0.14.0.
+- Keep existing syntax highlighting for the new config value combinations.
+
+### Maintenance
+
+- Update the VS Code language client and packaging dependencies.
+- Refresh compiler integration fixtures, make test-server shutdown reliable, and enforce selected compatibility checks before merging.
+- Remove the flaky Marketplace preflight from CI; Marketplace publication still validates and uploads the extension.
+
 ## [0.14.0] - 2026-09-09
 
 ### Added
@@ -133,3 +146,5 @@ Initial public release.
 - Configurable `skelc.path` with automatic language-server restart
 - Language-server trace, output, restart, and startup troubleshooting support
 - Local, remote workspace, and untitled-document selectors
+
+[0.15.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.14.0...v0.15.0
