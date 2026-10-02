@@ -96,6 +96,12 @@ class LSPPeer {
 }
 
 function waitForExit(process, timeout) {
+  process.stdin.end();
+  if (process.exitCode !== null || process.signalCode !== null) {
+    return process.exitCode === 0 ? Promise.resolve() : Promise.reject(
+      new Error(`skelc lsp exited with code=${process.exitCode} signal=${process.signalCode}`)
+    );
+  }
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       process.kill();
@@ -150,7 +156,7 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
   const namingPath = path.join(workspace, "naming.skel");
   const decoratorPath = path.join(workspace, "decorator.skel");
   const userSource = "domain demo.user\n@desc(\"User account\")\n@deprecated(\"Use Profile instead\")\ndata User {\n    id: int\n}\n";
-  const orderSource = "domain demo.order\nimport demo.user\ndata Order {\nowner: user.User\n}\n";
+  const orderSource = "domain demo.order\nimport demo.user as user\ndata Order {\nowner: user.User\n}\n";
   const problemSource = "domain demo.problem\ndata User {\n    first string\n    second:\n    third: string\n}\ndata User {}\n";
   const namingSource = "domain demo.naming\ndata user {}\n";
   const decoratorSource = "domain demo.decorator\nconfig FeatureConfig instant {\n    @desc(\"Enabled\")\n    @\n    enabled: bool\n}\n";
@@ -399,6 +405,78 @@ test("API syntax and strict diagnostics work with the current compiler", {
     const codes = strict.diagnostics.filter(d => d.severity === 1).map(d => d.code);
     peer.notify("workspace/didChangeConfiguration", { settings: { strict: false } });
     await peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri && codes.every(code => p.diagnostics.some(d => d.code === code && d.severity === 2)));
+    await peer.request("shutdown", null);
+    peer.notify("exit");
+    await waitForExit(child, 5000);
+  } finally {
+    if (child.exitCode === null) child.kill();
+    fs.rmSync(workspace, { recursive: true, force: true });
+  }
+});
+
+test("structured config diagnostics, completion and formatting through LSP", {
+  skip: !process.env.SKELC_PATH,
+  timeout: 20000
+}, async (t) => {
+  const versionResult = childProcess.spawnSync(process.env.SKELC_PATH, ["version"], { encoding: "utf8", timeout: 5000 });
+  assert.equal(versionResult.status, 0, versionResult.stdout + versionResult.stderr);
+  const version = JSON.parse(versionResult.stdout).version;
+  const match = /^v?(\d+)\.(\d+)\.(\d+)/.exec(version);
+  assert.ok(match, `Unexpected compiler version: ${version}`);
+  if (Number(match[1]) === 0 && Number(match[2]) < 23) {
+    t.skip("Structured configs require skelc v0.23.0 or newer");
+    return;
+  }
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "skel-config-lsp-"));
+  const fixture = fs.readFileSync(path.resolve(__dirname, "../../../packages/highlight/test/fixtures/config.skel"), "utf8");
+  const uri = pathToFileURL(path.join(workspace, "config.skel")).href;
+  const child = childProcess.spawn(process.env.SKELC_PATH, ["lsp"], { stdio: ["pipe", "pipe", "pipe"] });
+  const peer = new LSPPeer(child.stdin, child.stdout);
+  try {
+    await peer.request("initialize", {
+      processId: process.pid, rootUri: pathToFileURL(workspace).href, capabilities: {},
+      initializationOptions: { schemaCompatibility: { diagnostics: false, codeLens: false } }
+    });
+    peer.notify("initialized", {});
+    const diagnosticsPromise = peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri);
+    peer.notify("textDocument/didOpen", { textDocument: { uri, languageId: "skel", version: 1, text: fixture } });
+    assert.deepEqual((await diagnosticsPromise).diagnostics, []);
+    const formatted = await peer.request("textDocument/formatting", {
+      textDocument: { uri }, options: { tabSize: 4, insertSpaces: true }
+    });
+    const formattedText = formatted.length ? formatted[0].newText : fixture;
+    assert.match(formattedText, /value: TValue\?/);
+    assert.match(formattedText, /entries: list<map<string, Entry<binary\?>\?>>/);
+    const decoratorLine = fixture.split("\n").findLastIndex(line => line.includes("@sensitive"));
+    const editingLines = fixture.split("\n");
+    editingLines[decoratorLine] = "    @";
+    const editingDiagnostics = peer.waitForNotification("textDocument/publishDiagnostics", p =>
+      p.uri === uri && p.diagnostics.some(d => d.code.startsWith("syntax."))
+    );
+    peer.notify("textDocument/didChange", {
+      textDocument: { uri, version: 2 }, contentChanges: [{ text: editingLines.join("\n") }]
+    });
+    await editingDiagnostics;
+    const completion = await peer.request("textDocument/completion", {
+      textDocument: { uri }, position: { line: decoratorLine, character: 5 },
+      context: { triggerKind: 2, triggerCharacter: "@" }
+    });
+    assert.ok(completion.some(item => item.label === "@sensitive"), JSON.stringify(completion));
+    assert.ok(!completion.some(item => item.label === "@noTrim"));
+
+    const invalidCases = [
+      ["config ChildConfig eternal {}\nconfig AppConfig instant { child: list<ChildConfig> }", /config ChildConfig cannot be used as a value type/],
+      ["event ChangedEvent { payload { content: binary } }\ndata Entry<TValue> { value: TValue? }\nconfig AppConfig instant { entry: Entry<ChangedEvent> }", /event ChangedEvent cannot be used as a value type/],
+      ["config AppConfig instant { @noTrim content: string }", /noTrim/]
+    ];
+    for (const [index, [body, message]] of invalidCases.entries()) {
+      const expected = peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri && p.diagnostics.some(d => d.severity === 1 && message.test(d.message)));
+      peer.notify("textDocument/didChange", {
+        textDocument: { uri, version: index + 3 }, contentChanges: [{ text: `domain demo.config\n${body}\n` }]
+      });
+      const diagnostics = (await expected).diagnostics;
+      assert.ok(diagnostics.some(d => d.severity === 1 && message.test(d.message)));
+    }
     await peer.request("shutdown", null);
     peer.notify("exit");
     await waitForExit(child, 5000);

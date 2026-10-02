@@ -1,0 +1,19 @@
+domain demo.config
+
+// Structured config values, available since skelc v0.23.0.
+data Entry<TValue> {
+    value: TValue?
+}
+
+data Node {
+    @sensitive
+    content: binary
+    children: list<Node>
+}
+
+config AssetConfig instant {
+    root: Node?
+    entries: list<map<string, Entry<binary?>?>>
+    @sensitive
+    content: binary
+}

@@ -65,6 +65,14 @@ class SkelLexerTest {
         }
     }
 
+    @Test fun structuredConfigFixture() {
+        val text = javaClass.getResource("/config.skel")!!.readText()
+        val result = tokens(text)
+        assertFalse(result.any { it.first == TokenType.BAD_CHARACTER })
+        assertTrue(result.any { it.first == SkelTokens.TYPE && it.second == "binary" })
+        assertTrue(result.any { it.second == "?" })
+    }
+
     @Test fun sharedFixtureAndIncompleteEdits() {
         val text = javaClass.getResource("/compatibility.skel")!!.readText()
         assertFalse(tokens(text).any { it.first == TokenType.BAD_CHARACTER })
