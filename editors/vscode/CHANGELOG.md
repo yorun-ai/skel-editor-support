@@ -4,6 +4,23 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-10-04
+
+### Added
+
+- Highlight `ext service` and `ext event` across the shared TextMate grammar, frontend adapters, VS Code and JetBrains.
+- Fold extension service and event declarations in VS Code.
+
+### Changed
+
+- Remove highlighting of the retired `open` modifier to match skelc v0.24.0.
+
+### Compatibility
+
+- Extension contract diagnostics, completion and formatting require skelc v0.24.0 or newer. The minimum supported skelc remains v0.14.0 for existing capabilities.
+- Validate both editor integrations with skelc v0.24.0, including extension contracts and API services declaring actor audiences.
+- When upgrading an existing `open service` contract, replace it with `ext service` and upgrade the skelc executable configured by the editor.
+
 ## [0.15.0] - 2026-10-02
 
 ### Compatibility
@@ -147,4 +164,6 @@ Initial public release.
 - Language-server trace, output, restart, and startup troubleshooting support
 - Local, remote workspace, and untitled-document selectors
 
+[Unreleased]: https://github.com/yorun-ai/skel-editor-support/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.14.0...v0.15.0
