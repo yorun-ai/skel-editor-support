@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-10-05
+
+### Added
+
+- Highlight `auth required`, `auth optional`, `auth anonymous` and `auth off` across the shared TextMate grammar, frontend adapters, VS Code and JetBrains.
+
+### Compatibility
+
+- Validate editor integrations with skelc v0.26.0. The minimum supported skelc remains v0.14.0.
+- Authentication syntax diagnostics and completion require skelc v0.26.0; syntax highlighting works independently of the installed compiler.
+- Keep highlighting legacy bare `auth` and `noauth` syntax.
+
 ## [0.15.0] - 2026-10-02
 
 ### Compatibility
@@ -75,4 +87,5 @@
 - Keep the backward-compatible LSP API and allow newer IDE builds without a fixed upper bound.
 - Verify GoLand and IntelliJ IDEA at 2025.2.1 and 2026.2.2.
 
+[0.17.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.16.0...v0.17.0
 [0.15.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.14.0...v0.15.0

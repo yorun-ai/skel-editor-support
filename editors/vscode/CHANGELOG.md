@@ -4,6 +4,18 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-10-05
+
+### Added
+
+- Highlight `auth required`, `auth optional`, `auth anonymous` and `auth off` across the shared TextMate grammar, frontend adapters, VS Code and JetBrains.
+
+### Compatibility
+
+- Validate editor integrations with skelc v0.26.0. The minimum supported skelc remains v0.14.0.
+- Authentication syntax diagnostics and completion require skelc v0.26.0; syntax highlighting works independently of the installed compiler.
+- Keep highlighting legacy bare `auth` and `noauth` syntax.
+
 ## [0.16.0] - 2026-10-04
 
 ### Added
@@ -164,6 +176,7 @@ Initial public release.
 - Language-server trace, output, restart, and startup troubleshooting support
 - Local, remote workspace, and untitled-document selectors
 
-[Unreleased]: https://github.com/yorun-ai/skel-editor-support/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/yorun-ai/skel-editor-support/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.16.0...v0.17.0
 [0.16.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.14.0...v0.15.0
