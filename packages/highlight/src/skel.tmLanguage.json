@@ -226,7 +226,7 @@
       "patterns": [
         {
           "name": "meta.method-auth.skel",
-          "match": "\\b(auth|noauth)\\b",
+          "match": "\\b(auth|noauth|required|optional|anonymous|off)\\b",
           "captures": {
             "1": {
               "name": "keyword.control.auth.skel"
@@ -306,7 +306,7 @@
       "patterns": [
         {
           "name": "keyword.control.skel",
-          "match": "\\b(pub|api|ext|domain|import|as|via|for|auth|noauth|permission|credential|info|method|require|trigger|input|output|payload|resource|action|check|all|any|client|agent|openapi|eternal|instant)\\b"
+          "match": "\\b(pub|api|ext|domain|import|as|via|for|auth|noauth|required|optional|anonymous|off|permission|credential|info|method|require|trigger|input|output|payload|resource|action|check|all|any|client|agent|openapi|eternal|instant)\\b"
         }
       ]
     },

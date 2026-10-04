@@ -1,11 +1,18 @@
 domain demo.api
 
-actor GuestActor {
+actor ClientActor {
     via client {}
 }
 
 api service HealthApiService {
-    for GuestActor via client
-    noauth
+    for ClientActor via client
+    auth optional
     method ping {}
+    method login { auth anonymous }
+    method profile { auth required }
+}
+
+web LoginWeb {
+    for ClientActor via client
+    auth off
 }

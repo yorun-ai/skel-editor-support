@@ -35,7 +35,7 @@ The extension supports VS Code 1.91 or newer and requires `skelc v0.14.0` or new
 
 When the configured skelc executable is replaced, the plugin offers **Restart Now** or **Later** after verifying the replacement. The running server continues until you choose to restart; choosing Later suppresses further prompts for that same update. Detection uses directory change notifications and a check when the editor regains focus, without periodic polling. Symbolic links and their resolved targets are monitored. No IDE restart is required.
 
-Use skelc v0.18.0 or newer for `api service` diagnostics and completion, and skelc v0.24.0 or newer for `ext service` and `ext event` diagnostics and completion. Syntax highlighting recognizes `api` and `ext` independently of the installed compiler. Config values containing nested data, binary values and nullable generic parameters require skelc v0.23.0 or newer for language intelligence.
+Use skelc v0.18.0 or newer for `api service` diagnostics and completion, and skelc v0.24.0 or newer for `ext service` and `ext event` diagnostics and completion. Authentication modes `auth required`, `auth optional`, `auth anonymous`, and web-only `auth off` require skelc v0.26.0 or newer for diagnostics and completion. Legacy bare `auth`/`noauth` remain highlighted; skelc reports their migration warnings. Syntax highlighting recognizes these modes, `api`, and `ext` independently of the installed compiler. Config values containing nested data, binary values and nullable generic parameters require skelc v0.23.0 or newer for language intelligence.
 
 ## Configuration
 
