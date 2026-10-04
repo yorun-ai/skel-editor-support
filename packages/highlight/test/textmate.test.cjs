@@ -37,7 +37,8 @@ test("TextMate grammar recognizes representative Skel constructs", async () => {
     ["import demo.shared as shared", "keyword.control.import.skel"],
     ["pub data User {", "entity.name.type.skel"],
     ["api service OrderApiService {", "entity.name.type.skel"],
-    ["open service StorageService {", "entity.name.type.skel"],
+    ["ext service StorageService {", "entity.name.type.skel"],
+    ["ext event AuditRecordedEvent {", "entity.name.type.skel"],
     ["    id: int", "support.type.skel"],
     ["    method getUser {", "entity.name.function.method.skel"],
     ["// contract comment", "comment.line.double-slash.skel"],
@@ -92,18 +93,29 @@ test("TextMate distinguishes data declarations from data fields", async () => {
   assert.ok(!dataScopes[1].some((scope) => scope.startsWith("keyword.")));
 });
 
-test("TextMate highlights service modifiers without treating keyword-named fields as keywords", async () => {
+test("TextMate highlights service and event modifiers without treating keyword-named fields as keywords", async () => {
   const grammar = await loadGrammar();
   for (const [line, word, scope] of [
     ["api service HealthApiService {", "api", "storage.modifier.public.skel"],
-    ["open service StorageService {", "open", "storage.modifier.public.skel"],
+    ["ext service StorageService {", "ext", "storage.modifier.public.skel"],
+    ["ext event AuditRecordedEvent {", "ext", "storage.modifier.public.skel"],
     ["api service HealthApiService {", "HealthApiService", "entity.name.type.skel"],
     ["  api: string", "api", "variable.other.member.skel"],
+    ["  ext: string", "ext", "variable.other.member.skel"],
     ["  open: string", "open", "variable.other.member.skel"]
   ]) {
     const result = grammar.tokenizeLine(line, textmate.INITIAL);
     assert.ok(result.tokens.some(token => line.slice(token.startIndex, token.endIndex) === word && token.scopes.includes(scope)), line);
   }
+});
+
+test("TextMate no longer highlights open as a modifier", async () => {
+  const grammar = await loadGrammar();
+  const line = "open service StorageService {";
+  const result = grammar.tokenizeLine(line, textmate.INITIAL);
+  const token = result.tokens.find(token => token.startIndex === 0);
+  assert.ok(token);
+  assert.ok(!token.scopes.some(scope => scope.startsWith("keyword.") || scope.startsWith("storage.modifier.")));
 });
 
 test("TextMate highlights nested config binary values and nullable generic parameters", async () => {

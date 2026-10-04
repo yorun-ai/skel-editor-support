@@ -28,6 +28,19 @@ class SkelLspIntegrationTest {
         exerciseEditing(javaClass.getResource("/config.skel")!!.readText(), "AssetConfig")
     }
 
+    @Test fun extensionContractEditing() {
+        val executable = System.getProperty("skelc.path", "")
+        assumeTrue("Set SKELC_PATH to run real skelc integration", executable.isNotBlank())
+        val output = CapturingProcessHandler(SkelServerCommand.command(executable, "version", null)).runProcess(5000)
+        assertFalse("Version probe timed out", output.isTimeout)
+        assertEquals(output.stderr, 0, output.exitCode)
+        val version = SkelServerCommand.versionFromJson(output.stdout)
+        assumeTrue("Extension contracts require skelc v0.24.0 or newer", SkelServerCommand.supports(version, "v0.24.0"))
+        val fixture = javaClass.getResource("/ext.skel")!!.readText()
+        exerciseEditing(fixture, "StorageService")
+        exerciseEditing(fixture, "AuditRecordedEvent")
+    }
+
     private fun exerciseEditing(text: String, symbol: String) {
         val executable = System.getProperty("skelc.path", "")
         assumeTrue("Set SKELC_PATH to run real skelc integration", executable.isNotBlank())

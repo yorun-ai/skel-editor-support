@@ -1,6 +1,11 @@
 domain demo.api
 
+actor GuestActor {
+    via client {}
+}
+
 api service HealthApiService {
+    for GuestActor via client
     noauth
     method ping {}
 }
