@@ -137,3 +137,13 @@ test("TextMate highlights nested config binary values and nullable generic param
     assert.ok(tokens.some(token => token.value === value && token.scopes.includes(scope)), `${value}: ${scope}`);
   }
 });
+
+test("TextMate grammar highlights explicit auth modes", async () => {
+  const grammar = await loadGrammar();
+  for (const mode of ["required", "optional", "anonymous", "off"]) {
+    const line = `auth ${mode}`;
+    const tokenized = grammar.tokenizeLine(line, textmate.INITIAL);
+    const token = tokenized.tokens.find((item) => line.slice(item.startIndex, item.endIndex) === mode);
+    assert.ok(token?.scopes.some((scope) => scope.startsWith("keyword.control")), `${mode} is not highlighted`);
+  }
+});
