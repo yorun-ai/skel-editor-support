@@ -485,3 +485,47 @@ test("structured config diagnostics, completion and formatting through LSP", {
     fs.rmSync(workspace, { recursive: true, force: true });
   }
 });
+
+test("extension service and event contracts through LSP", {
+  skip: !process.env.SKELC_PATH,
+  timeout: 20000
+}, async (t) => {
+  const versionResult = childProcess.spawnSync(process.env.SKELC_PATH, ["version"], { encoding: "utf8", timeout: 5000 });
+  assert.equal(versionResult.status, 0, versionResult.stdout + versionResult.stderr);
+  const version = JSON.parse(versionResult.stdout).version;
+  const match = /^v?(\d+)\.(\d+)\.(\d+)/.exec(version);
+  assert.ok(match, `Unexpected compiler version: ${version}`);
+  if (Number(match[1]) === 0 && Number(match[2]) < 24) {
+    t.skip("Extension contracts require skelc v0.24.0 or newer");
+    return;
+  }
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "skel-ext-lsp-"));
+  const fixture = fs.readFileSync(path.resolve(__dirname, "../../../packages/highlight/test/fixtures/ext.skel"), "utf8");
+  const uri = pathToFileURL(path.join(workspace, "extensions.skel")).href;
+  const child = childProcess.spawn(process.env.SKELC_PATH, ["lsp"], { stdio: ["pipe", "pipe", "pipe"] });
+  const peer = new LSPPeer(child.stdin, child.stdout);
+  try {
+    await peer.request("initialize", {
+      processId: process.pid, rootUri: pathToFileURL(workspace).href, capabilities: {},
+      initializationOptions: { schemaCompatibility: { diagnostics: false, codeLens: false } }
+    });
+    peer.notify("initialized", {});
+    const diagnostics = peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri);
+    peer.notify("textDocument/didOpen", { textDocument: { uri, languageId: "skel", version: 1, text: fixture } });
+    assert.deepEqual((await diagnostics).diagnostics, []);
+    const symbols = await peer.request("textDocument/documentSymbol", { textDocument: { uri } });
+    for (const name of ["StorageService", "AuditRecordedEvent"]) {
+      assert.ok(symbols.some(symbol => symbol.name === name), name);
+    }
+    const edits = await peer.request("textDocument/formatting", { textDocument: { uri }, options: { tabSize: 4, insertSpaces: true } });
+    const formatted = edits.length ? edits[0].newText : fixture;
+    assert.match(formatted, /ext service StorageService/);
+    assert.match(formatted, /ext event AuditRecordedEvent/);
+    await peer.request("shutdown", null);
+    peer.notify("exit");
+    await waitForExit(child, 5000);
+  } finally {
+    if (child.exitCode === null) child.kill();
+    fs.rmSync(workspace, { recursive: true, force: true });
+  }
+});

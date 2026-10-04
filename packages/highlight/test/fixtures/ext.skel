@@ -1,0 +1,15 @@
+domain demo.extensions
+
+ext service StorageService {
+    method store {
+        input {
+            key: string
+        }
+    }
+}
+
+ext event AuditRecordedEvent {
+    payload {
+        key: string
+    }
+}

@@ -25,6 +25,10 @@ test("Shiki highlights representative Skel source", async () => {
     assert.match(html, /<span[^>]*>pub<\/span>/);
     assert.match(html, /<span[^>]*> data<\/span>/);
     assert.match(html, /<span[^>]*> User<\/span>/);
+    for (const declaration of ["ext service StorageService {", "ext event AuditRecordedEvent {"]) {
+      const highlighted = highlighter.codeToHtml(declaration, { lang: "skel", theme: "github-dark" });
+      assert.match(highlighted, /<span[^>]*>ext<\/span>/);
+    }
   } finally {
     highlighter.dispose();
   }

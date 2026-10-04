@@ -25,6 +25,15 @@ class SkelLexerTest {
         assertEquals(SkelTokens.IDENTIFIER, tokens("api: string").first().first)
     }
 
+    @Test fun extensionModifiers() {
+        val fixture = javaClass.getResource("/ext.skel")!!.readText()
+        val modifiers = tokens(fixture).filter { it.second == "ext" }
+        assertEquals(2, modifiers.size)
+        assertTrue(modifiers.all { it.first == SkelTokens.KEYWORD })
+        assertEquals(SkelTokens.IDENTIFIER, tokens("ext: string").first().first)
+        assertEquals(SkelTokens.IDENTIFIER, tokens("open").single().first)
+    }
+
     @Test fun sharedVocabulary() {
         for (word in SkelVocabulary.keywords) assertEquals(SkelTokens.KEYWORD, tokens(word).single().first)
         for (word in SkelVocabulary.builtinTypes) assertEquals(SkelTokens.TYPE, tokens(word).single().first)
