@@ -59,7 +59,7 @@ SKELC_PATH=/absolute/path/to/skelc \
 ./gradlew test -PlocalPlatformPath=/absolute/path/to/GoLand.app/Contents
 ```
 
-Without `SKELC_PATH`, real server integration is explicitly skipped; lexer, version policy, and IDE fixture tests still run. CI sets it and runs against the minimum supported skelc version. PRs and main pushes run baseline tests only when JetBrains code or its shared inputs change. CI also exercises the five optional-signing configurations using `node --test scripts/jetbrains-signing.test.mjs` from the repository root, without signing or uploading. Main pushes also run the full Plugin Verifier matrix for those changes; manual CI input `full=true` runs all components. Release publishing requires successful main CI for the exact release commit and verifies the release-version plugin before uploading, without repeating server integration tests. Tests cover token restart boundaries, incomplete edits, shared fixtures, comment/bracket/quote behavior, LSP initialize/open/change/symbols/format/shutdown against the real server, and startup/restart/disable through the IDE LSP manager.
+Without `SKELC_PATH`, real server integration is explicitly skipped; lexer, version policy, and IDE fixture tests still run. CI sets it and runs against the minimum supported skelc version. PRs run baseline tests only when JetBrains code or its shared inputs change. CI also exercises the five optional-signing configurations using `node --test scripts/jetbrains-signing.test.mjs` from the repository root, without signing or uploading. Selected PR checks also run the full Plugin Verifier matrix; manual CI input `full=true` runs all components. Release publishing requires a reviewed tag on main after required PR CI passes, and verifies the release-version plugin before uploading, without repeating server integration tests. Tests cover token restart boundaries, incomplete edits, shared fixtures, comment/bracket/quote behavior, LSP initialize/open/change/symbols/format/shutdown against the real server, and startup/restart/disable through the IDE LSP manager.
 
 ## Packaging and publishing
 
@@ -80,4 +80,10 @@ For later releases, the repository Publish workflow has a separate JetBrains job
 - `JETBRAINS_PRIVATE_KEY` — optional PEM private key content
 - `JETBRAINS_PRIVATE_KEY_PASSWORD` — only needed for an encrypted private key
 
-A published `v<version>` GitHub Release injects the version through Gradle, validates compatibility and uploads the plugin. Publishing checks for a non-empty token and paired signing credentials before downloading the SDK. With only the token configured, author signing is skipped. Provide both certificate and private key to enable signing; empty values are treated as absent, and configuring only one fails with a clear error. Keep the job disabled until the first listing and credentials are ready. Do not publish version `0.0.0`. Publication does not bypass Marketplace review.
+A pushed, reviewed `v<version>` tag starts publication and injects the version through Gradle, validates compatibility and uploads the plugin. Publishing checks for a non-empty token and paired signing credentials before downloading the SDK. With only the token configured, author signing is skipped. Provide both certificate and private key to enable signing; empty values are treated as absent, and configuring only one fails with a clear error. Keep the job disabled until the first listing and credentials are ready. Do not publish version `0.0.0`. Publication does not bypass Marketplace review.
+
+After Marketplace upload succeeds, Publish stores a submission receipt on the
+Draft Release. GitHub Release becomes public only after all enabled channels
+have matching receipts. This confirms submission, not JetBrains review approval;
+review and listing availability can follow later. See the repository
+[release lifecycle](../../.github/CI.md) for recovery if upload or receipt recording fails.

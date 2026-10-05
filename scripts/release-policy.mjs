@@ -1,13 +1,11 @@
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
+import { publication } from './release-publication.mjs';
 
-export function validateRelease({ tag, sha, release, artifacts = 'all', jetbrainsEnabled = false }) {
+export function validateRelease({ tag, sha, artifacts = 'all', jetbrainsEnabled = false }) {
   if (!/^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(tag) || tag === 'v0.0.0') {
     throw new Error('Release tag must be vX.Y.Z, excluding v0.0.0');
-  }
-  if (release.tag_name !== tag || release.draft !== false || !release.published_at) {
-    throw new Error(`Expected an existing published release for ${tag}`);
   }
   if (!['all', 'vscode', 'npm', 'jetbrains'].includes(artifacts)) throw new Error('Invalid artifact selection');
   if (artifacts === 'jetbrains' && !jetbrainsEnabled) throw new Error('JetBrains publication is disabled');
@@ -27,9 +25,7 @@ export function main(env = process.env, run = (command, args) => execFileSync(co
   if (run('git', ['rev-parse', '--verify', `refs/tags/${tag}^{commit}`]) !== sha) throw new Error('Tag does not match checkout');
   run('git', ['fetch', 'origin', 'main']);
   run('git', ['merge-base', '--is-ancestor', sha, 'refs/remotes/origin/main']);
-  const repo = env.GITHUB_REPOSITORY;
-  const release = JSON.parse(run('gh', ['api', `repos/${repo}/releases/tags/${tag}`]));
-  const selected = validateRelease({ tag, sha, release,
+  const selected = validateRelease({ tag, sha,
     artifacts: env.ARTIFACTS || 'all', jetbrainsEnabled: env.JETBRAINS_ENABLED === 'true' });
   const version = tag.slice(1);
   const changelog = readFileSync('editors/vscode/CHANGELOG.md', 'utf8');
@@ -37,6 +33,12 @@ export function main(env = process.env, run = (command, args) => execFileSync(co
   if (!heading.test(changelog)) throw new Error(`Missing dated changelog entry for ${tag}`);
   const { minimumVersion } = JSON.parse(readFileSync('editors/vscode/skelc-compatibility.json', 'utf8'));
   run('git', ['ls-remote', '--exit-code', '--tags', 'https://github.com/yorun-ai/skelc.git', `refs/tags/${minimumVersion}`]);
+  const section = changelog.slice(changelog.search(heading)).split('\n').slice(1).join('\n').split(/^## /m)[0].trim();
+  if (!section) throw new Error('Empty changelog entry');
+  const client = publication({ ...env, RELEASE_COMMIT: sha }, run);
+  try {
+    for (const channel of client.prepare(section)) selected[channel] = false;
+  } finally { client.dispose(); }
   appendFileSync(env.GITHUB_OUTPUT, Object.entries(selected).map(([key, value]) => `${key}=${value}\n`).join(''));
 }
 

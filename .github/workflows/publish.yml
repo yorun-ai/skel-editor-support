@@ -1,10 +1,12 @@
 name: Publish
 
 on:
+  push:
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing published release tag (vX.Y.Z)
+        description: Existing version tag (vX.Y.Z)
         required: true
         type: string
       artifacts:
@@ -12,26 +14,24 @@ on:
         type: choice
         options: [all, vscode, npm, jetbrains]
         default: all
-  release:
-    types: [published]
 
 permissions:
   contents: read
 
 concurrency:
-  group: publish-${{ github.event.release.tag_name || inputs.tag }}
+  group: publish-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 env:
-  RELEASE_TAG: ${{ github.event.release.tag_name || inputs.tag }}
+  RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
 
 jobs:
   validate:
-    name: Validate published release
+    name: Validate release and prepare draft
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
-      contents: read
+      contents: write
     outputs:
       commit: ${{ steps.release.outputs.commit }}
       vscode: ${{ steps.release.outputs.vscode }}
@@ -65,6 +65,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: vscode-marketplace
+    permissions:
+      contents: write
     steps:
       - name: Check out release
         uses: actions/checkout@v7
@@ -116,6 +118,17 @@ jobs:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: npm run publish:marketplace --workspace skeleton -- --packagePath "$GITHUB_WORKSPACE/dist/skeleton-${{ env.RELEASE_TAG }}.vsix"
 
+      - name: Check out publication helper
+        uses: actions/checkout@v7
+        with:
+          path: publication-automation
+      - name: Record successful submission
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
+          PUBLICATION_CHANNEL: vscode
+        run: node publication-automation/scripts/release-publication.mjs record
+
   npm:
     name: npm
     needs: validate
@@ -124,7 +137,7 @@ jobs:
     timeout-minutes: 20
     environment: npm
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
       - name: Check out release
@@ -167,6 +180,17 @@ jobs:
       - name: Publish package
         run: npm publish --workspace @yorun-ai/skel-highlight
 
+      - name: Check out publication helper
+        uses: actions/checkout@v7
+        with:
+          path: publication-automation
+      - name: Record successful submission
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
+          PUBLICATION_CHANNEL: npm
+        run: node publication-automation/scripts/release-publication.mjs record
+
   jetbrains:
     name: JetBrains Marketplace
     needs: validate
@@ -174,6 +198,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: jetbrains-marketplace
+    permissions:
+      contents: write
     steps:
       - name: Check JetBrains publishing credentials
         env:
@@ -220,3 +246,35 @@ jobs:
         run: |
           test -n "$JETBRAINS_MARKETPLACE_TOKEN"
           ./gradlew publishPlugin
+
+      - name: Check out publication helper
+        uses: actions/checkout@v7
+        with:
+          path: publication-automation
+      - name: Record successful submission
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
+          PUBLICATION_CHANNEL: jetbrains
+        run: node publication-automation/scripts/release-publication.mjs record
+
+  complete:
+    name: Verify channels and publish Release
+    if: ${{ always() }}
+    needs: [validate, marketplace, npm, jetbrains]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Verify every required submission
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
+          JETBRAINS_ENABLED: ${{ vars.JETBRAINS_MARKETPLACE_ENABLED }}
+          NEEDS: ${{ toJSON(needs) }}
+        run: node scripts/release-publication.mjs complete
