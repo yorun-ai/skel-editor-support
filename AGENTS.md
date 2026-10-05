@@ -19,7 +19,7 @@
 
 - Edit the canonical grammar under `packages/highlight/src`, highlighter adapters in that package, extension client code under `editors/vscode/src`, themes under `editors/vscode/themes`, and VS Code language behavior in `editors/vscode/language-configuration.json`.
 - Do not commit generated grammars (`editors/vscode/syntaxes`), generated licenses, `out`, `dist`, or `*.vsix`. Build release artifacts only for an explicit release or packaging task.
-- Keep workspace source versions at the `0.0.0` development placeholder. The Publish workflow derives the release version from a `v<version>` GitHub Release tag and applies it only in the temporary Actions checkout.
+- Keep workspace source versions at the `0.0.0` development placeholder. The Publish workflow derives the release version from a pushed `v<version>` Git tag and applies it only in the temporary Actions checkout.
 - Lock files must use public package registry URLs; do not commit internal mirrors or credentials.
 
 ## Tests and Validation
@@ -30,3 +30,13 @@
 - Add focused tests when client startup, configuration, or protocol behavior becomes more complex than static validation can cover.
 - Test protocol features against a compatible `skelc lsp`; do not replace server integration tests with JavaScript implementations of Skel semantics.
 - Run `git diff --check` before handing off changes.
+
+## Release Publication and Recovery
+
+- Merge release preparation after required PR checks pass, sync main, then push the reviewed `vX.Y.Z` tag (excluding `v0.0.0`). Tag pushes start Publish; do not publish GitHub Release first.
+- Validate tag identity, main ancestry, dated nonempty VS Code CHANGELOG and the released minimum skelc version. Keep source versions at `0.0.0`; inject versions only in Actions checkouts.
+- Prepare a Draft Release with changelog notes and a `publication.json` manifest binding tag, commit and required channels. Keep one `publication-<channel>.json` receipt after each successful upload. Receipts are durable Release assets, never source files, and must not be overwritten or fabricated.
+- Only publish GitHub Release after all required channel receipts match the source and the current selected jobs succeeded. JetBrains remains opt-in; its receipt records upload/submission, not Marketplace review approval or public availability.
+- Preserve per-channel environments and credentials. Check environment deployment rules permit version tags. Changing the JetBrains enablement flag during recovery must fail rather than silently drop a required channel.
+- Retry failed jobs or dispatch for the same tag with `all`, `vscode`, `npm`, or `jetbrains`; matching successful receipts skip duplicate uploads. If remote upload succeeded but recording failed, verify the exact remote version and source before repairing the missing receipt; never blindly republish or overwrite a version.
+- Existing published Releases without a manifest retain legacy selective recovery and are not edited. See `.github/CI.md` for recovery boundaries and checks.

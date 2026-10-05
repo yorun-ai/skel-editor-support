@@ -49,7 +49,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for repository boundaries, validation com
 
 ## Release Versions
 
-Source manifests use `0.0.0` as a development placeholder. Publishing a GitHub Release with a `v<version>` tag applies that version to every workspace package in the temporary Actions checkout before validation and packaging.
+Source manifests use `0.0.0` as a development placeholder. Pushing a reviewed `v<version>` tag starts publication and applies that version to every workspace package in the temporary Actions checkout before validation and packaging.
+
+GitHub Release is published after all required channels report successful submission. JetBrains Marketplace review may complete later.
 
 See [CI and release lifecycle](.github/CI.md) for required PR checks, tag behavior and single-channel release recovery.
 

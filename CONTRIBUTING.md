@@ -86,7 +86,9 @@ For JetBrains changes, also follow [its development guide](editors/jetbrains/REA
 
 Workspace source manifests use `0.0.0` as a development placeholder. Do not replace it with a release version in a pull request.
 
-The Publish workflow derives the release version from a `v<version>` GitHub Release tag, applies it in the temporary Actions checkout, validates the packages, and produces the release artifacts. The VS Code Marketplace extension identity is `yorun.skeleton`.
+The Publish workflow derives the release version from a pushed `v<version>` Git tag, applies it in the temporary Actions checkout, validates the packages, and produces the release artifacts. The VS Code Marketplace extension identity is `yorun.skeleton`.
+
+Merge reviewed release preparation before pushing the tag. Do not publish GitHub Release manually: channel submissions run first, and successful receipts are verified before the Draft becomes public. Keep each environment configured to accept version tags. See [publication and recovery](.github/CI.md#publishing).
 
 Create the root release `dist` directory and `.vsix` files only for an explicit packaging or release task, and do not commit them.
 
@@ -103,7 +105,7 @@ Maintainers will review compatibility-sensitive changes to extension identity, s
 
 ## CI scope
 
-PRs use changed-file rules; main and tag pushes do not trigger CI. Every run reports `CI / Required Checks`; the lightweight scope and release-policy tests always run so branch protection does not wait on a missing check.
+PRs use changed-file rules; main and tag pushes do not trigger PR CI; version tags trigger Publish. Every run reports `CI / Required Checks`; the lightweight scope and release-policy tests always run so branch protection does not wait on a missing check.
 
 | Changed files | Automatic checks |
 | --- | --- |

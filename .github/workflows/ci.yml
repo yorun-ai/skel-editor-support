@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: 22
       - name: Test change classification
-        run: node --test scripts/ci-scope.test.mjs scripts/release-policy.test.mjs
+        run: node --test scripts/ci-scope.test.mjs scripts/release-policy.test.mjs scripts/release-publication.test.mjs
       - name: Select checks
         id: scope
         env:
