@@ -59,13 +59,21 @@ async function run() {
   assert.equal(probe.status, 0, probe.stdout + probe.stderr);
   if (probe.stdout.includes("--strict")) {
     await replaceDocument(source, "domain demo\nservice HealthService { method ping {} }\n");
-    await waitForDiagnostic(source, vscode.DiagnosticSeverity.Warning);
+    assert.equal(await source.save(), true);
+    const version = JSON.parse(require("node:child_process").execFileSync(process.env.SKELC_PATH, ["version"], { encoding: "utf8" })).version;
+    const match = /^v?(\d+)\.(\d+)\.(\d+)/.exec(version);
+    assert.ok(match, `Unexpected compiler version: ${version}`);
+    const currentRules = Number(match[1]) > 0 || Number(match[2]) >= 31;
+    const normalSeverity = currentRules ? vscode.DiagnosticSeverity.Error : vscode.DiagnosticSeverity.Warning;
+    await waitForDiagnostic(source, normalSeverity);
     await vscode.workspace.getConfiguration("skelc").update("strict", true, vscode.ConfigurationTarget.Workspace);
+    await vscode.commands.executeCommand("skel.restartLanguageServer");
     await waitForDiagnostic(source, vscode.DiagnosticSeverity.Error);
     await vscode.workspace.getConfiguration("skelc").update("strict", false, vscode.ConfigurationTarget.Workspace);
-    await waitForDiagnostic(source, vscode.DiagnosticSeverity.Warning);
+    await vscode.commands.executeCommand("skel.restartLanguageServer");
+    await waitForDiagnostic(source, normalSeverity);
   }
-
+  console.log("Skel Extension Host tests passed.");
 }
 
 async function waitForDiagnostic(document, severity) {

@@ -1,0 +1,49 @@
+domain demo.versioned
+
+// Independent contracts with versioned names and multiline actor audiences.
+actor UserActor {}
+actor UserActorV1 {}
+actor UserActorV10 {}
+actor UserActorV999 {}
+
+api service UserApiServiceV1 {
+    for UserActor, UserActorV1,
+        UserActorV10
+        , UserActorV999
+    auth optional
+    method ping {}
+}
+
+api service UserApiServiceV10 {
+    for UserActorV10
+    auth optional
+    method ping {}
+}
+
+api service UserApiServiceV999 {
+    for UserActorV999
+    auth optional
+    method ping {}
+}
+
+pub service StorageServiceV2 {
+    method ping {}
+}
+
+event ChangedEventV1 {
+    payload { id: int }
+}
+
+config FeatureConfigV10 instant {
+    enabled: bool
+}
+
+task CleanupTaskV999 {
+    trigger run {}
+}
+
+web AssetWebV2 {
+    for UserActorV1,
+        UserActorV10
+    auth off
+}

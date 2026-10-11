@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/github/license/yorun-ai/skel-editor-support)](https://github.com/yorun-ai/skel-editor-support/blob/main/LICENSE)
 [![Version](https://img.shields.io/github/v/release/yorun-ai/skel-editor-support?label=version&cacheSeconds=300)](https://github.com/yorun-ai/skel-editor-support/releases/latest)
 
-VS Code language support for [Skeleton (Skel)](https://github.com/yorun-ai/skelc), an open-source DSL for describing software architecture.
+VS Code language support for [Skeleton (Skel)](https://github.com/yorun-ai/skel), an open-source DSL for describing software architecture.
 
 ![Skel editing in VS Code](https://raw.githubusercontent.com/yorun-ai/skel-editor-support/main/editors/vscode/assets/editor.png)
 
@@ -25,7 +25,7 @@ VS Code language support for [Skeleton (Skel)](https://github.com/yorun-ai/skelc
 Install `skelc` first:
 
 ```sh
-go install go.yorun.ai/skelc/cmd/skelc@latest
+go install go.yorun.ai/skel/cmd/skelc@latest
 skelc version
 ```
 
@@ -35,14 +35,16 @@ The extension supports VS Code 1.91 or newer and requires `skelc v0.14.0` or new
 
 When the configured skelc executable is replaced, the plugin offers **Restart Now** or **Later** after verifying the replacement. The running server continues until you choose to restart; choosing Later suppresses further prompts for that same update. Detection uses directory change notifications and a check when the editor regains focus, without periodic polling. Symbolic links and their resolved targets are monitored. No IDE restart is required.
 
-Use skelc v0.18.0 or newer for `api service` diagnostics and completion, and skelc v0.24.0 or newer for `ext service` and `ext event` diagnostics and completion. Authentication modes `auth required`, `auth optional`, `auth anonymous`, and web-only `auth off` require skelc v0.26.0 or newer for diagnostics and completion. Legacy bare `auth`/`noauth` remain highlighted; skelc reports their migration warnings. Syntax highlighting recognizes these modes, `api`, and `ext` independently of the installed compiler. Config values containing nested data, binary values and nullable generic parameters require skelc v0.23.0 or newer for language intelligence.
+Use skelc v0.18.0 or newer for `api service` diagnostics and completion, and skelc v0.24.0 or newer for `ext service` and `ext event` diagnostics and completion. Authentication modes `auth required`, `auth optional`, `auth anonymous`, and web-only `auth off` require skelc v0.26.0 or newer for diagnostics and completion. Legacy bare `auth`/`noauth` remain highlighted, but skelc v0.31.0 and newer reject them. Syntax highlighting recognizes these modes, `api`, and `ext` independently of the installed compiler. Config values containing nested data, binary values and nullable generic parameters require skelc v0.23.0 or newer for language intelligence.
+
+Names with `Vn` suffixes (such as `OrderApiServiceV10`) and comma-separated actor audiences (such as `for UserActor, AdminActor`) require skelc v0.32.0 or newer for language intelligence. Comma lists may span lines. This compiler warns about repeated `for` clauses and empty audience blocks; duplicate actors are errors. The extension is tested with v0.14.0 and v0.32.0.
 
 ## Configuration
 
 | Setting | Default | Description |
 | --- | --- | --- |
 | `skelc.path` | `skelc` | Executable used to start the language server. Changing it restarts the server. |
-| `skelc.strict` | `false` | Treat migration warnings as errors with skelc v0.18.0 or newer. Changing it restarts the server. |
+| `skelc.strict` | `false` | Pass `--strict` to skelc v0.18.0 or newer. With v0.31.0 or newer, validation is identical to the default; older versions promote migration warnings to errors. Changing it restarts the server. |
 | `skelc.trace.server` | `off` | Protocol tracing: `off`, `messages`, or `verbose`. |
 | `skelc.schemaCompatibility.diagnostics` | `true` | Report breaking and dangerous schema changes while editing. |
 | `skelc.schemaCompatibility.includeCompatible` | `false` | Also report compatible changes as hints. |

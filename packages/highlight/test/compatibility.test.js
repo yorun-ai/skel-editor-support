@@ -22,7 +22,8 @@ const editingStates = [
 ];
 
 const configFixture = await readFile(new URL("./fixtures/config.skel", import.meta.url), "utf8");
-for (const [name, source] of [["broad", fixture], ["structured config", configFixture]]) {
+const versionedFixture = await readFile(new URL("./fixtures/versioned.skel", import.meta.url), "utf8");
+for (const [name, source] of [["broad", fixture], ["structured config", configFixture], ["versioned", versionedFixture]]) {
   test(`all executable adapters accept the ${name} Skel fixture`, async () => {
     const fixture = source;
     registerSkelPrism(Prism);
@@ -46,11 +47,11 @@ for (const [name, source] of [["broad", fixture], ["structured config", configFi
     highlightTree(skelLanguage.parser.parse(fixture), classHighlighter, (from, to, classes) => {
       codeMirrorTokens.push({ value: fixture.slice(from, to), classes });
     });
-    const builtin = name === "broad" ? "duration" : "binary";
+    const builtin = name === "broad" ? "duration" : name === "versioned" ? "bool" : "binary";
     assert.ok(codeMirrorTokens.some(({ value, classes }) => value === builtin && classes === "tok-typeName"));
     if (name === "broad") {
       assert.ok(codeMirrorTokens.some(({ value, classes }) => value.includes("Find a user") && classes === "tok-string"));
-    } else {
+    } else if (name === "structured config") {
       assert.ok(codeMirrorTokens.some(({ value, classes }) => value.includes("?") && classes === "tok-operator"));
     }
   });

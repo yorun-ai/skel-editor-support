@@ -19,18 +19,6 @@ pub data Page<TItem> {
     nextToken: string?
 }
 
-pub actor ClientActor {
-    via client {}
-    auth {
-        credential {
-            subject: string
-        }
-        info {
-            subject: string
-        }
-    }
-}
-
 pub service UserService {
 
     @desc("""

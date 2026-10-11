@@ -10,7 +10,7 @@ This repository contains two npm workspace packages and a Gradle plugin:
 - `editors/vscode` owns the Visual Studio Code extension, language configuration, theme, Marketplace metadata, and the client that starts `skelc lsp`.
 - `editors/jetbrains` owns the Kotlin IntelliJ Platform plugin and its Gradle validation and publishing.
 
-Keep the editor clients as thin Language Server Protocol clients. Parsing, semantic analysis, formatting, diagnostics, and other language intelligence belong in the independent [`yorun-ai/skelc`](https://github.com/yorun-ai/skelc) repository.
+Keep the editor clients as thin Language Server Protocol clients. Parsing, semantic analysis, formatting, diagnostics, and other language intelligence belong in the independent [`yorun-ai/skel`](https://github.com/yorun-ai/skel) repository.
 
 ## Prerequisites
 
@@ -40,7 +40,7 @@ Do not commit generated grammar copies, package `dist` directories, extension `o
 
 When Skel syntax changes, update the canonical grammar and representative fixtures here, and coordinate the language implementation and documentation changes with:
 
-- [`yorun-ai/skelc`](https://github.com/yorun-ai/skelc)
+- [`yorun-ai/skel`](https://github.com/yorun-ai/skel)
 - [`yorun-ai/skel-site`](https://github.com/yorun-ai/skel-site)
 
 When an LSP capability changes, implement it in `skelc lsp` first, keep the extension client thin, and update the minimum compatible skelc version in the extension README when necessary.

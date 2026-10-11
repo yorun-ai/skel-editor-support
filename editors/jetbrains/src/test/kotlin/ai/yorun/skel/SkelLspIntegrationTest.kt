@@ -41,6 +41,17 @@ class SkelLspIntegrationTest {
         exerciseEditing(fixture, "AuditRecordedEvent")
     }
 
+    @Test fun versionedContractEditing() {
+        val executable = System.getProperty("skelc.path", "")
+        assumeTrue("Set SKELC_PATH to run real skelc integration", executable.isNotBlank())
+        val output = CapturingProcessHandler(SkelServerCommand.command(executable, "version", null)).runProcess(5000)
+        assertFalse("Version probe timed out", output.isTimeout)
+        assertEquals(output.stderr, 0, output.exitCode)
+        val version = SkelServerCommand.versionFromJson(output.stdout)
+        assumeTrue("Versioned contracts require skelc v0.32.0 or newer", SkelServerCommand.supports(version, "v0.32.0"))
+        exerciseEditing(javaClass.getResource("/versioned.skel")!!.readText(), "UserApiServiceV999")
+    }
+
     private fun exerciseEditing(text: String, symbol: String) {
         val executable = System.getProperty("skelc.path", "")
         assumeTrue("Set SKELC_PATH to run real skelc integration", executable.isNotBlank())

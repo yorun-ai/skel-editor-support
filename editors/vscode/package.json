@@ -149,7 +149,7 @@
           "type": "boolean",
           "default": false,
           "scope": "window",
-          "description": "Treat Skel migration warnings as errors (requires skelc v0.18.0 or newer). Changes restart the language server."
+          "description": "Pass --strict to skelc (requires v0.18.0 or newer). With v0.31.0 or newer, validation is identical to the default; older versions promote migration warnings to errors. Changes restart the language server."
         }
       }
     }

@@ -32,7 +32,7 @@ export function main(env = process.env, run = (command, args) => execFileSync(co
   const heading = new RegExp(`^## \\[${version.replaceAll('.', '\\.')}\\] - \\d{4}-\\d{2}-\\d{2}$`, 'm');
   if (!heading.test(changelog)) throw new Error(`Missing dated changelog entry for ${tag}`);
   const { minimumVersion } = JSON.parse(readFileSync('editors/vscode/skelc-compatibility.json', 'utf8'));
-  run('git', ['ls-remote', '--exit-code', '--tags', 'https://github.com/yorun-ai/skelc.git', `refs/tags/${minimumVersion}`]);
+  run('git', ['ls-remote', '--exit-code', '--tags', 'https://github.com/yorun-ai/skel.git', `refs/tags/${minimumVersion}`]);
   const section = changelog.slice(changelog.search(heading)).split('\n').slice(1).join('\n').split(/^## /m)[0].trim();
   if (!section) throw new Error('Empty changelog entry');
   const client = publication({ ...env, RELEASE_COMMIT: sha }, run);

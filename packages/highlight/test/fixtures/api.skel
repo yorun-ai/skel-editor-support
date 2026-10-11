@@ -1,11 +1,10 @@
 domain demo.api
 
 actor ClientActor {
-    via client {}
 }
 
 api service HealthApiService {
-    for ClientActor via client
+    for ClientActor
     auth optional
     method ping {}
     method login { auth anonymous }
@@ -13,6 +12,6 @@ api service HealthApiService {
 }
 
 web LoginWeb {
-    for ClientActor via client
+    for ClientActor
     auth off
 }
