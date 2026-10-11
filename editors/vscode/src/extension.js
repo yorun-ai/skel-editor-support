@@ -8,7 +8,7 @@ const { snapshot, ExecutableMonitor } = require("./executable-monitor");
 
 const restartCommand = "skel.restartLanguageServer";
 const showOutputCommand = "skel.showLanguageServerOutput";
-const installURL = "https://github.com/yorun-ai/skelc#install";
+const installURL = "https://github.com/yorun-ai/skel#install";
 
 let client;
 let executableMonitor;

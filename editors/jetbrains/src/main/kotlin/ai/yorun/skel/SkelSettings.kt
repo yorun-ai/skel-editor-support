@@ -53,7 +53,9 @@ class SkelConfigurable(private val project: Project) : Configurable {
     override fun createComponent(): JComponent {
         executable = JBTextField()
         enabled = JBCheckBox("Enable skelc language server")
-        strict = JBCheckBox("Strict mode (requires skelc v0.18.0 or newer)")
+        strict = JBCheckBox("Strict mode (requires skelc v0.18.0 or newer)").apply {
+            toolTipText = "With skelc v0.31.0 or newer, validation is identical to the default; older versions promote migration warnings to errors."
+        }
         diagnostics = JBCheckBox("Report schema compatibility changes")
         compatible = JBCheckBox("Include compatible changes as hints")
         baseline = JBTextField()

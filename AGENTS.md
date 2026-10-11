@@ -3,7 +3,7 @@
 ## Project Scope
 
 - This repository owns editor integrations and syntax highlighting for the Skel language.
-- Keep the extension as a thin Language Server Protocol client. Parsing, semantic analysis, formatting, and language intelligence belong to `skelc lsp` in the independent `yorun-ai/skelc` repository.
+- Keep the extension as a thin Language Server Protocol client. Parsing, semantic analysis, formatting, and language intelligence belong to `skelc lsp` in the independent `yorun-ai/skel` repository.
 - `packages/highlight` owns the canonical TextMate grammar and frontend highlighter adapters. `editors/vscode` owns VS Code language configuration, themes, extension settings, client startup, and Marketplace packaging.
 - Do not copy Skel parser or analyzer logic into JavaScript. New semantic editor features should first be implemented by the skelc language server and then enabled by this client.
 - `editors/jetbrains` owns the Kotlin IntelliJ Platform plugin, editor behavior, LSP integration, Gradle tests and Marketplace packaging. Read its local guidelines before modifying it.

@@ -182,3 +182,25 @@ test("service and event modifiers are highlighted across frontend adapters", asy
   assert.match(JSON.stringify(starryNight.highlight("ext service StorageService {", "source.skel")), /pl-k/);
   assert.match(JSON.stringify(starryNight.highlight("ext event AuditRecordedEvent {", "source.skel")), /pl-k/);
 });
+
+test("adapters preserve versioned names", () => {
+  const instance = hljs.newInstance();
+  instance.registerLanguage("skel", skelHighlightJs);
+  const tokenizer = new MonarchTokenizer({}, {}, "skel", compileMonarch("skel", skelMonarch), {
+    getValue: () => 20000, onDidChangeConfiguration: () => ({ dispose() {} })
+  });
+  try {
+    for (const name of ["UserActorV1", "UserActorV10", "UserActorV999", "UserApiServiceV999"]) {
+      assert.ok(Prism.highlight(name, skelPrism, "skel").includes(`>${name}</span>`));
+      assert.ok(instance.highlight(name, { language: "skel" }).value.includes(`>${name}</span>`));
+      const tokens = [];
+      highlightTree(skelLanguage.parser.parse(name), classHighlighter, (from, to, classes) => {
+        tokens.push({ value: name.slice(from, to), classes });
+      });
+      assert.deepEqual(tokens, [{ value: name, classes: "tok-className" }]);
+      const monarch = tokenizer.tokenize(name, true, tokenizer.getInitialState());
+      assert.equal(monarch.tokens.length, 1);
+      assert.equal(monarch.tokens[0].type, "identifier.skel");
+    }
+  } finally { tokenizer.dispose(); }
+});

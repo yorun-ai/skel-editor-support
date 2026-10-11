@@ -27,13 +27,15 @@ Install **Skel Language Support** from Marketplace when available, or build the 
 For language intelligence, install skelc:
 
 ```sh
-go install go.yorun.ai/skelc/cmd/skelc@latest
+go install go.yorun.ai/skel/cmd/skelc@latest
 skelc version
 ```
 
 Open **Settings | Languages & Frameworks | Skel** and set the executable to `skelc` or an absolute path. Do not add arguments or surrounding shell quotes. Saving settings restarts the server for this project. Schema baseline paths resolve from the domain source directory, not the IDE project root.
 
-Enable **Strict mode** in the same settings page to treat migration warnings as errors. It is disabled by default and requires skelc v0.18.0 or newer; saving restarts the server. API service diagnostics and completion also require v0.18.0 or newer. `ext service` and `ext event` language intelligence require skelc v0.24.0 or newer, while `api` and `ext` highlighting work independently of skelc. Authentication modes `auth required`, `auth optional`, `auth anonymous`, and web-only `auth off` require skelc v0.26.0 or newer for diagnostics and completion. Their highlighting works independently of skelc, and legacy bare `auth`/`noauth` remain highlighted. Config values containing nested data, binary values and nullable generic parameters require skelc v0.23.0 or newer for language intelligence.
+**Strict mode** passes `--strict` to skelc. It is disabled by default and requires skelc v0.18.0 or newer; saving restarts the server. With v0.31.0 or newer, validation is identical to the default; older versions promote migration warnings to errors. API service diagnostics and completion also require v0.18.0 or newer. `ext service` and `ext event` language intelligence require skelc v0.24.0 or newer, while `api` and `ext` highlighting work independently of skelc. Authentication modes `auth required`, `auth optional`, `auth anonymous`, and web-only `auth off` require skelc v0.26.0 or newer for diagnostics and completion. Their highlighting works independently of skelc, and legacy bare `auth`/`noauth` remain highlighted, although skelc v0.31.0 and newer reject them. Config values containing nested data, binary values and nullable generic parameters require skelc v0.23.0 or newer for language intelligence.
+
+Names with `Vn` suffixes and comma-separated actor audiences require skelc v0.32.0 or newer for language intelligence. Comma lists may span lines. This compiler warns about repeated `for` clauses and empty audience blocks; duplicate actors are errors. CI tests both v0.14.0 and v0.32.0.
 
 Open a `.skel` file in a trusted project. The plugin starts `skelc version` with a five-second timeout, validates compatibility, and then starts `skelc lsp` over standard input/output. If you trust a previously untrusted project after opening the file, use **Tools | Restart Skel Language Server**.
 
@@ -59,7 +61,7 @@ SKELC_PATH=/absolute/path/to/skelc \
 ./gradlew test -PlocalPlatformPath=/absolute/path/to/GoLand.app/Contents
 ```
 
-Without `SKELC_PATH`, real server integration is explicitly skipped; lexer, version policy, and IDE fixture tests still run. CI sets it and runs against the minimum supported skelc version. PRs run baseline tests only when JetBrains code or its shared inputs change. CI also exercises the five optional-signing configurations using `node --test scripts/jetbrains-signing.test.mjs` from the repository root, without signing or uploading. Selected PR checks also run the full Plugin Verifier matrix; manual CI input `full=true` runs all components. Release publishing requires a reviewed tag on main after required PR CI passes, and verifies the release-version plugin before uploading, without repeating server integration tests. Tests cover token restart boundaries, incomplete edits, shared fixtures, comment/bracket/quote behavior, LSP initialize/open/change/symbols/format/shutdown against the real server, and startup/restart/disable through the IDE LSP manager.
+Without `SKELC_PATH`, real server integration is explicitly skipped; lexer, version policy, and IDE fixture tests still run. CI sets it and runs against the minimum and latest tested skelc versions. PRs run baseline tests only when JetBrains code or its shared inputs change. CI also exercises the five optional-signing configurations using `node --test scripts/jetbrains-signing.test.mjs` from the repository root, without signing or uploading. Selected PR checks also run the full Plugin Verifier matrix; manual CI input `full=true` runs all components. Release publishing requires a reviewed tag on main after required PR CI passes, and verifies the release-version plugin before uploading, without repeating server integration tests. Tests cover token restart boundaries, incomplete edits, shared fixtures, comment/bracket/quote behavior, LSP initialize/open/change/symbols/format/shutdown against the real server, and startup/restart/disable through the IDE LSP manager.
 
 ## Packaging and publishing
 

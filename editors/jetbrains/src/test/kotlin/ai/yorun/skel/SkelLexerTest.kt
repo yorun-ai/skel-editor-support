@@ -82,6 +82,15 @@ class SkelLexerTest {
         assertTrue(result.any { it.second == "?" })
     }
 
+    @Test fun versionedNamesAndCommaAudiences() {
+        val result = tokens(javaClass.getResource("/versioned.skel")!!.readText())
+        assertFalse(result.any { it.first == TokenType.BAD_CHARACTER })
+        for (name in listOf("UserActorV1", "UserActorV10", "UserActorV999", "UserApiServiceV999", "StorageServiceV2", "ChangedEventV1", "FeatureConfigV10", "CleanupTaskV999", "AssetWebV2")) {
+            assertTrue(name, result.any { it.first == SkelTokens.TYPE && it.second == name })
+        }
+        assertTrue(result.any { it.first == SkelTokens.PUNCTUATION && it.second == "," })
+    }
+
     @Test fun sharedFixtureAndIncompleteEdits() {
         val text = javaClass.getResource("/compatibility.skel")!!.readText()
         assertFalse(tokens(text).any { it.first == TokenType.BAD_CHARACTER })

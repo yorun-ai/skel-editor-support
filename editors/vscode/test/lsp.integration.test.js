@@ -95,6 +95,20 @@ class LSPPeer {
   }
 }
 
+function compilerAtLeast(minimum) {
+  const result = childProcess.spawnSync(process.env.SKELC_PATH, ["version"], { encoding: "utf8", timeout: 5000 });
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const version = JSON.parse(result.stdout).version;
+  const actual = /^v?(\d+)\.(\d+)\.(\d+)/.exec(version);
+  assert.ok(actual, `Unexpected compiler version: ${version}`);
+  const required = minimum.slice(1).split(".").map(Number);
+  for (let index = 0; index < required.length; index++) {
+    const difference = Number(actual[index + 1]) - required[index];
+    if (difference !== 0) return difference > 0;
+  }
+  return true;
+}
+
 function waitForExit(process, timeout) {
   process.stdin.end();
   if (process.exitCode !== null || process.signalCode !== null) {
@@ -377,7 +391,7 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
   }
 });
 
-test("API syntax and strict diagnostics work with the current compiler", {
+test("strict mode follows the installed compiler diagnostic policy", {
   skip: !process.env.SKELC_PATH,
   timeout: 20000
 }, async (t) => {
@@ -387,7 +401,7 @@ test("API syntax and strict diagnostics work with the current compiler", {
     t.skip("This compiler predates API services and strict mode");
     return;
   }
-  const fixture = path.resolve(__dirname, "../../../packages/highlight/test/fixtures/api.skel");
+  const fixture = path.resolve(__dirname, "../../../packages/highlight/test/fixtures", compilerAtLeast("v0.32.0") ? "api.skel" : "compatibility.skel");
   const result = childProcess.spawnSync(process.env.SKELC_PATH, ["--strict", "check", "--skel-in", fixture], { encoding: "utf8", timeout: 5000 });
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.deepEqual(JSON.parse(result.stdout).diagnostics, []);
@@ -404,7 +418,12 @@ test("API syntax and strict diagnostics work with the current compiler", {
     const strict = await peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri && p.diagnostics.some(d => d.severity === 1));
     const codes = strict.diagnostics.filter(d => d.severity === 1).map(d => d.code);
     peer.notify("workspace/didChangeConfiguration", { settings: { strict: false } });
-    await peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri && codes.every(code => p.diagnostics.some(d => d.code === code && d.severity === 2)));
+    peer.notify("textDocument/didChange", {
+      textDocument: { uri, version: 2 },
+      contentChanges: [{ text: "domain demo\nservice HealthService { method ping {} }\n// Strict mode disabled.\n" }]
+    });
+    const expectedSeverity = compilerAtLeast("v0.31.0") ? 1 : 2;
+    await peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri && p.version === 2 && codes.every(code => p.diagnostics.some(d => d.code === code && d.severity === expectedSeverity)));
     await peer.request("shutdown", null);
     peer.notify("exit");
     await waitForExit(child, 5000);
@@ -521,6 +540,76 @@ test("extension service and event contracts through LSP", {
     const formatted = edits.length ? edits[0].newText : fixture;
     assert.match(formatted, /ext service StorageService/);
     assert.match(formatted, /ext event AuditRecordedEvent/);
+    await peer.request("shutdown", null);
+    peer.notify("exit");
+    await waitForExit(child, 5000);
+  } finally {
+    if (child.exitCode === null) child.kill();
+    fs.rmSync(workspace, { recursive: true, force: true });
+  }
+});
+
+test("versioned contracts and comma audiences support diagnostics, navigation and formatting", {
+  skip: !process.env.SKELC_PATH,
+  timeout: 20000
+}, async t => {
+  if (!compilerAtLeast("v0.32.0")) {
+    t.skip("Versioned contracts and comma audiences require skelc v0.32.0");
+    return;
+  }
+  const fixturePath = path.resolve(__dirname, "../../../packages/highlight/test/fixtures/versioned.skel");
+  const checked = childProcess.spawnSync(process.env.SKELC_PATH, ["check", "--skel-in", fixturePath], { encoding: "utf8", timeout: 5000 });
+  assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+  assert.deepEqual(JSON.parse(checked.stdout).diagnostics, []);
+  const fixture = fs.readFileSync(fixturePath, "utf8");
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "skel-versioned-lsp-"));
+  const uri = pathToFileURL(path.join(workspace, "versioned.skel")).href;
+  const child = childProcess.spawn(process.env.SKELC_PATH, ["lsp"], { stdio: ["pipe", "pipe", "pipe"] });
+  const peer = new LSPPeer(child.stdin, child.stdout);
+  try {
+    await peer.request("initialize", {
+      processId: process.pid, rootUri: pathToFileURL(workspace).href, capabilities: {},
+      initializationOptions: { schemaCompatibility: { diagnostics: false, codeLens: false } }
+    });
+    peer.notify("initialized", {});
+    peer.notify("textDocument/didOpen", { textDocument: { uri, languageId: "skel", version: 1, text: fixture } });
+    assert.deepEqual((await peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri && p.version === 1)).diagnostics, []);
+    const symbols = await peer.request("textDocument/documentSymbol", { textDocument: { uri } });
+    for (const name of ["UserActorV1", "UserActorV10", "UserActorV999", "UserApiServiceV1", "UserApiServiceV10", "UserApiServiceV999", "StorageServiceV2", "ChangedEventV1", "FeatureConfigV10", "CleanupTaskV999", "AssetWebV2"]) {
+      assert.ok(symbols.some(symbol => symbol.name === name), name);
+    }
+    const lines = fixture.split("\n");
+    const line = lines.findIndex(line => line.trim() === "UserActorV10");
+    const position = { line, character: lines[line].indexOf("UserActorV10") + 2 };
+    const definition = await peer.request("textDocument/definition", { textDocument: { uri }, position });
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].uri, uri);
+    assert.equal(definition[0].range.start.line, lines.indexOf("actor UserActorV10 {}"));
+    const renamed = await peer.request("textDocument/rename", { textDocument: { uri }, position, newName: "MemberActorV10" });
+    assert.equal(renamed.changes[uri].length, 4);
+    for (const edit of renamed.changes[uri]) {
+      assert.equal(lines[edit.range.start.line].slice(edit.range.start.character, edit.range.end.character), "UserActorV10");
+      assert.equal(edit.newText, "MemberActorV10");
+    }
+    const formatting = await peer.request("textDocument/formatting", { textDocument: { uri }, options: { tabSize: 4, insertSpaces: true } });
+    const formatted = formatting.length ? formatting[0].newText : fixture;
+    assert.match(formatted, /for UserActor,\s*UserActorV1,\s*UserActorV10\s*,\s*UserActorV999/);
+    assert.match(formatted, /for UserActorV1,\s*UserActorV10/);
+
+    const cases = [
+      ["for UserActorV1\n    for UserActorV10", [["actor.repeated-for", 2]]],
+      ["for UserActorV1 {}", [["actor.for-block-ignored", 2]]],
+      ["for UserActorV1, UserActorV1", [["semantic.duplicate", 1]]],
+      ["for UserActorV1\n    for UserActorV1", [["actor.repeated-for", 2], ["semantic.duplicate", 1]]]
+    ];
+    for (const [index, [audience, expected]] of cases.entries()) {
+      const version = index + 2;
+      peer.notify("textDocument/didChange", {
+        textDocument: { uri, version }, contentChanges: [{ text: `domain demo.versioned\nactor UserActorV1 {}\nactor UserActorV10 {}\napi service UserApiServiceV1 {\n    ${audience}\n    auth optional\n    method ping {}\n}\n` }]
+      });
+      const diagnostics = (await peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri && p.version === version && expected.every(([code, severity]) => p.diagnostics.some(d => d.code === code && d.severity === severity)))).diagnostics;
+      assert.deepEqual(diagnostics.map(d => [d.code, d.severity]).sort(), expected.slice().sort(), audience);
+    }
     await peer.request("shutdown", null);
     peer.notify("exit");
     await waitForExit(child, 5000);

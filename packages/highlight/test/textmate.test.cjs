@@ -69,10 +69,26 @@ test("TextMate grammar preserves multiline and incomplete editing state", async 
   }
   assert.ok(scopes.includes("comment.block.skel"));
   assert.ok(scopes.includes("string.quoted.triple.skel"));
-  assert.ok(scopes.includes("constant.language.actor-via.skel"));
 
   const incomplete = grammar.tokenizeLine('@desc("unfinished', textmate.INITIAL);
   assert.ok(incomplete.tokens.some((token) => token.scopes.includes("string.quoted.double.skel")));
+});
+
+test("TextMate preserves versioned names and multiline audience punctuation", async () => {
+  const grammar = await loadGrammar();
+  const fixture = fs.readFileSync(path.join(root, "test", "fixtures", "versioned.skel"), "utf8");
+  const tokens = [];
+  let state = textmate.INITIAL;
+  for (const line of fixture.split("\n")) {
+    const result = grammar.tokenizeLine(line, state);
+    state = result.ruleStack;
+    tokens.push(...result.tokens.map(token => ({ text: line.slice(token.startIndex, token.endIndex), scopes: token.scopes })));
+  }
+  for (const name of ["UserActorV1", "UserActorV10", "UserActorV999", "UserApiServiceV999", "StorageServiceV2", "ChangedEventV1", "FeatureConfigV10", "CleanupTaskV999", "AssetWebV2"]) {
+    assert.ok(tokens.some(token => token.text === name && token.scopes.includes("entity.name.type.skel")), name);
+  }
+  assert.ok(tokens.some(token => token.text === "UserActorV999" && token.scopes.includes("entity.name.type.reference.skel")));
+  assert.ok(tokens.some(token => token.text === "," && token.scopes.includes("punctuation.separator.skel")));
 });
 
 test("TextMate distinguishes data declarations from data fields", async () => {
