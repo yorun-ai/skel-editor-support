@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-10-11
+
+### Changed
+
+- Remove retired actor transport keywords from shared syntax highlighting, editor fixtures and documentation.
+- Use `go install go.yorun.ai/skel/cmd/skelc@latest` as the compiler installation command.
+
+### Compatibility
+
+- Validate editor integrations with skelc v0.32.0. The minimum supported skelc remains v0.14.0.
+- Cover versioned contract names such as `OrderApiServiceV999` and multiline, comma-separated actor audiences with shared highlighting and real language-server tests. Language intelligence for this syntax requires skelc v0.32.0 or newer.
+- Clarify that strict mode has the same validation behavior as the default with skelc v0.31.0 or newer, which rejects legacy bare `auth` and `noauth` syntax.
+
+### Maintenance
+
+- Publish GitHub Release only after all enabled distribution channels report successful submission. JetBrains Marketplace review may finish later.
+
 ## [0.17.0] - 2026-10-05
 
 ### Added
@@ -87,5 +104,7 @@
 - Keep the backward-compatible LSP API and allow newer IDE builds without a fixed upper bound.
 - Verify GoLand and IntelliJ IDEA at 2025.2.1 and 2026.2.2.
 
+[Unreleased]: https://github.com/yorun-ai/skel-editor-support/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.16.0...v0.17.0
 [0.15.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.14.0...v0.15.0
