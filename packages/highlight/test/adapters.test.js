@@ -150,12 +150,13 @@ test("Monaco tokenizes keyword-named fields as identifiers", () => {
   }
 });
 
-test("service and event modifiers are highlighted across frontend adapters", async () => {
+test("declaration modifiers are highlighted across frontend adapters", async () => {
   const source = await readFile(new URL("./fixtures/api.skel", import.meta.url), "utf8");
   const modifiers = [
     ["api service HealthApiService {", "api"],
     ["ext service StorageService {", "ext"],
-    ["ext event AuditRecordedEvent {", "ext"]
+    ["ext event AuditRecordedEvent {", "ext"],
+    ["abs config CacheAbsConfig eternal {", "abs"]
   ];
   const instance = hljs.newInstance();
   instance.registerLanguage("skel", skelHighlightJs);

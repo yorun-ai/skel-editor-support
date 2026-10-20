@@ -35,7 +35,9 @@ Open **Settings | Languages & Frameworks | Skel** and set the executable to `ske
 
 **Strict mode** passes `--strict` to skelc. It is disabled by default and requires skelc v0.18.0 or newer; saving restarts the server. With v0.31.0 or newer, validation is identical to the default; older versions promote migration warnings to errors. API service diagnostics and completion also require v0.18.0 or newer. `ext service` and `ext event` language intelligence require skelc v0.24.0 or newer, while `api` and `ext` highlighting work independently of skelc. Authentication modes `auth required`, `auth optional`, `auth anonymous`, and web-only `auth off` require skelc v0.26.0 or newer for diagnostics and completion. Their highlighting works independently of skelc, and legacy bare `auth`/`noauth` remain highlighted, although skelc v0.31.0 and newer reject them. Config values containing nested data, binary values and nullable generic parameters require skelc v0.23.0 or newer for language intelligence.
 
-Names with `Vn` suffixes and comma-separated actor audiences require skelc v0.32.0 or newer for language intelligence. Comma lists may span lines. This compiler warns about repeated `for` clauses and empty audience blocks; duplicate actors are errors. CI tests both v0.14.0 and v0.32.0.
+Names with `Vn` suffixes and comma-separated actor audiences require skelc v0.32.0 or newer for language intelligence. Comma lists may span lines. This compiler warns about repeated `for` clauses and empty audience blocks; duplicate actors are errors. CI tests both v0.14.0 and v0.33.0.
+
+Abstract configs (`abs config CacheAbsConfig eternal { ... }`) and config adoption (`config CacheConfig = CacheAbsConfig`, including imported sources) require skelc v0.33.0 or newer for language intelligence. Their syntax highlighting works independently of skelc.
 
 Open a `.skel` file in a trusted project. The plugin starts `skelc version` with a five-second timeout, validates compatibility, and then starts `skelc lsp` over standard input/output. If you trust a previously untrusted project after opening the file, use **Tools | Restart Skel Language Server**.
 

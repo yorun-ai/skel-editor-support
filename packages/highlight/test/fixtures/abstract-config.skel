@@ -1,0 +1,15 @@
+domain demo.config
+
+abs config CacheAbsConfig eternal {
+    endpoint: string
+    abs: bool
+}
+
+config CacheConfig = CacheAbsConfig
+pub config PublicCacheConfig = CacheAbsConfig
+
+abs config FeatureAbsConfigV2 instant {
+    enabled: bool
+}
+
+config FeatureConfigV2 = FeatureAbsConfigV2
