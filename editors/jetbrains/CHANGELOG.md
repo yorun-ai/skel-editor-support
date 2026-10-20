@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-10-21
+
+### Added
+
+- Highlight abstract config declarations (`abs config`) and config adoption (`config AppConfig = BaseAbsConfig`), including imported sources, across shared highlighting and editor integrations.
+
+### Compatibility
+
+- Validate editor integrations with skelc v0.33.0. The minimum supported skelc remains v0.14.0; language intelligence for abstract configs and config adoption requires v0.33.0 or newer.
+- Cover abstract configs, versioned config names, keyword-named fields, and local and cross-domain adoption with highlighting and real language-server tests.
+
 ## [0.18.0] - 2026-10-11
 
 ### Changed
@@ -104,7 +115,8 @@
 - Keep the backward-compatible LSP API and allow newer IDE builds without a fixed upper bound.
 - Verify GoLand and IntelliJ IDEA at 2025.2.1 and 2026.2.2.
 
-[Unreleased]: https://github.com/yorun-ai/skel-editor-support/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/yorun-ai/skel-editor-support/compare/v0.19.0...HEAD
+[0.19.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.16.0...v0.17.0
 [0.15.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.14.0...v0.15.0
