@@ -91,6 +91,14 @@ class SkelLexerTest {
         assertTrue(result.any { it.first == SkelTokens.PUNCTUATION && it.second == "," })
     }
 
+    @Test fun abstractConfigAndAdoption() {
+        val result = tokens(javaClass.getResource("/abstract-config.skel")!!.readText())
+        assertFalse(result.any { it.first == TokenType.BAD_CHARACTER })
+        assertTrue(result.any { it.first == SkelTokens.KEYWORD && it.second == "abs" })
+        assertTrue(result.any { it.first == SkelTokens.IDENTIFIER && it.second == "abs" })
+        assertTrue(result.any { it.first == SkelTokens.PUNCTUATION && it.second == "=" })
+    }
+
     @Test fun sharedFixtureAndIncompleteEdits() {
         val text = javaClass.getResource("/compatibility.skel")!!.readText()
         assertFalse(tokens(text).any { it.first == TokenType.BAD_CHARACTER })

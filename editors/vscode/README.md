@@ -37,7 +37,9 @@ When the configured skelc executable is replaced, the plugin offers **Restart No
 
 Use skelc v0.18.0 or newer for `api service` diagnostics and completion, and skelc v0.24.0 or newer for `ext service` and `ext event` diagnostics and completion. Authentication modes `auth required`, `auth optional`, `auth anonymous`, and web-only `auth off` require skelc v0.26.0 or newer for diagnostics and completion. Legacy bare `auth`/`noauth` remain highlighted, but skelc v0.31.0 and newer reject them. Syntax highlighting recognizes these modes, `api`, and `ext` independently of the installed compiler. Config values containing nested data, binary values and nullable generic parameters require skelc v0.23.0 or newer for language intelligence.
 
-Names with `Vn` suffixes (such as `OrderApiServiceV10`) and comma-separated actor audiences (such as `for UserActor, AdminActor`) require skelc v0.32.0 or newer for language intelligence. Comma lists may span lines. This compiler warns about repeated `for` clauses and empty audience blocks; duplicate actors are errors. The extension is tested with v0.14.0 and v0.32.0.
+Names with `Vn` suffixes (such as `OrderApiServiceV10`) and comma-separated actor audiences (such as `for UserActor, AdminActor`) require skelc v0.32.0 or newer for language intelligence. Comma lists may span lines. This compiler warns about repeated `for` clauses and empty audience blocks; duplicate actors are errors. The extension is tested with v0.14.0 and v0.33.0.
+
+Abstract configs (`abs config CacheAbsConfig eternal { ... }`) and config adoption (`config CacheConfig = CacheAbsConfig`, including imported sources) require skelc v0.33.0 or newer for language intelligence. Their syntax highlighting works independently of skelc.
 
 ## Configuration
 

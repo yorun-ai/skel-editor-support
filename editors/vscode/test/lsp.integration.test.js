@@ -618,3 +618,55 @@ test("versioned contracts and comma audiences support diagnostics, navigation an
     fs.rmSync(workspace, { recursive: true, force: true });
   }
 });
+
+test("abstract configs support local and imported adoption through LSP", {
+  skip: !process.env.SKELC_PATH,
+  timeout: 20000
+}, async t => {
+  if (!compilerAtLeast("v0.33.0")) {
+    t.skip("Abstract configs require skelc v0.33.0");
+    return;
+  }
+  const fixturePath = path.resolve(__dirname, "../../../packages/highlight/test/fixtures/abstract-config.skel");
+  const checked = childProcess.spawnSync(process.env.SKELC_PATH, ["check", "--skel-in", fixturePath], { encoding: "utf8", timeout: 5000 });
+  assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+  const fixture = fs.readFileSync(fixturePath, "utf8");
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "skel-abstract-config-lsp-"));
+  const sourcePath = path.join(workspace, "config.skel");
+  const adopterPath = path.join(workspace, "app.skel");
+  const sourceUri = pathToFileURL(sourcePath).href;
+  const uri = pathToFileURL(adopterPath).href;
+  const text = "domain demo.app\nimport demo.config as shared\nconfig AppConfig = shared.CacheAbsConfig\n";
+  fs.writeFileSync(sourcePath, fixture);
+  fs.writeFileSync(adopterPath, text);
+  const child = childProcess.spawn(process.env.SKELC_PATH, ["lsp"], { stdio: ["pipe", "pipe", "pipe"] });
+  const peer = new LSPPeer(child.stdin, child.stdout);
+  try {
+    await peer.request("initialize", {
+      processId: process.pid, rootUri: pathToFileURL(workspace).href, capabilities: {},
+      initializationOptions: { schemaCompatibility: { diagnostics: false, codeLens: false } }
+    });
+    peer.notify("initialized", {});
+    for (const [documentUri, source] of [[sourceUri, fixture], [uri, text]]) {
+      peer.notify("textDocument/didOpen", { textDocument: { uri: documentUri, languageId: "skel", version: 1, text: source } });
+      assert.deepEqual((await peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === documentUri && p.version === 1)).diagnostics, []);
+    }
+    const symbols = await peer.request("textDocument/documentSymbol", { textDocument: { uri: sourceUri } });
+    for (const name of ["CacheAbsConfig", "CacheConfig", "PublicCacheConfig", "FeatureAbsConfigV2", "FeatureConfigV2"]) {
+      assert.ok(symbols.some(symbol => symbol.name === name), name);
+    }
+    const position = { line: 2, character: text.split("\n")[2].indexOf("CacheAbsConfig") + 2 };
+    const definition = await peer.request("textDocument/definition", { textDocument: { uri }, position });
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].uri, sourceUri);
+    assert.equal(definition[0].range.start.line, 2);
+    const edits = await peer.request("textDocument/formatting", { textDocument: { uri }, options: { tabSize: 4, insertSpaces: true } });
+    assert.match(edits.length ? edits[0].newText : text, /config AppConfig = shared\.CacheAbsConfig/);
+    await peer.request("shutdown", null);
+    peer.notify("exit");
+    await waitForExit(child, 5000);
+  } finally {
+    if (child.exitCode === null) child.kill();
+    fs.rmSync(workspace, { recursive: true, force: true });
+  }
+});

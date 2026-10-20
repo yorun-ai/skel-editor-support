@@ -6,6 +6,8 @@ The `api` modifier is highlighted in service declarations; `ext` is highlighted 
 
 Versioned names such as `OrderApiServiceV999` and comma-separated, optionally multiline `for` audiences are highlighted. Language validation is provided by `skelc lsp` v0.32.0 or newer.
 
+Abstract configs (`abs config CacheAbsConfig eternal { ... }`) and config adoption (`config CacheConfig = CacheAbsConfig`, including imported sources) are highlighted. Language validation for these declarations requires `skelc lsp` v0.33.0 or newer.
+
 Field names such as `data: list<TItem>` are distinguished from declaration keywords such as `data PageResp<TItem>` across the adapters.
 
 Install the package with only the highlighter used by your application. All highlighter peer dependencies are optional.
