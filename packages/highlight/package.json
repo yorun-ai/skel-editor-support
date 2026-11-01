@@ -111,8 +111,8 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@codemirror/language": "6.12.4",
-    "@lezer/highlight": "1.2.4",
+    "@codemirror/language": "6.13.1",
+    "@lezer/highlight": "1.2.5",
     "@types/prismjs": "1.26.6",
     "@wooorm/starry-night": "3.11.0",
     "esbuild": "^0.28.2",
@@ -121,7 +121,7 @@
     "monaco-editor": "0.57.0",
     "prismjs": "1.30.0",
     "refractor": "5.0.0",
-    "shiki": "4.4.3",
+    "shiki": "4.5.0",
     "typescript": "^7.0.2",
     "vscode-oniguruma": "^2.0.1",
     "vscode-textmate": "^9.3.2"
