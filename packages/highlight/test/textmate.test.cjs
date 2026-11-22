@@ -109,6 +109,28 @@ test("TextMate distinguishes data declarations from data fields", async () => {
   assert.ok(!dataScopes[1].some((scope) => scope.startsWith("keyword.")));
 });
 
+test("TextMate highlights multiline actor impersonators and preserves same-named fields", async () => {
+  const grammar = await loadGrammar();
+  const fixture = fs.readFileSync(path.join(root, "test", "fixtures", "impersonator.skel"), "utf8");
+  let ruleStack = textmate.INITIAL;
+  const tokens = [];
+  for (const line of fixture.split("\n")) {
+    const result = grammar.tokenizeLine(line, ruleStack);
+    ruleStack = result.ruleStack;
+    tokens.push(...result.tokens.map(token => ({ text: line.slice(token.startIndex, token.endIndex), scopes: token.scopes })));
+  }
+  const impersonatorTokens = tokens.filter(token => token.text === "impersonator");
+  assert.equal(impersonatorTokens.length, 2);
+  const [keyword, field] = impersonatorTokens;
+  assert.ok(keyword.scopes.includes("keyword.control.skel"));
+  assert.ok(field.scopes.includes("variable.other.member.skel"));
+  assert.ok(!field.scopes.some(scope => scope.startsWith("keyword.")));
+  for (const actor of ["UserActor", "OpsActor"]) {
+    assert.ok(tokens.some(token => token.text === actor && token.scopes.includes("entity.name.type.reference.skel")), actor);
+  }
+  assert.ok(tokens.some(token => token.text === "," && token.scopes.includes("punctuation.separator.skel")));
+});
+
 test("TextMate highlights service and event modifiers without treating keyword-named fields as keywords", async () => {
   const grammar = await loadGrammar();
   for (const [line, word, scope] of [

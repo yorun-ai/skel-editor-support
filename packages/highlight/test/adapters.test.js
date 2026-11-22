@@ -150,13 +150,14 @@ test("Monaco tokenizes keyword-named fields as identifiers", () => {
   }
 });
 
-test("declaration modifiers are highlighted across frontend adapters", async () => {
+test("declaration modifiers and actor impersonators are highlighted across frontend adapters", async () => {
   const source = await readFile(new URL("./fixtures/api.skel", import.meta.url), "utf8");
-  const modifiers = [
+  const cases = [
     ["api service HealthApiService {", "api"],
     ["ext service StorageService {", "ext"],
     ["ext event AuditRecordedEvent {", "ext"],
-    ["abs config CacheAbsConfig eternal {", "abs"]
+    ["abs config CacheAbsConfig eternal {", "abs"],
+    ["impersonator OpsActor, AdminActor", "impersonator"]
   ];
   const instance = hljs.newInstance();
   instance.registerLanguage("skel", skelHighlightJs);
@@ -164,15 +165,15 @@ test("declaration modifiers are highlighted across frontend adapters", async () 
     getValue: () => 20000, onDidChangeConfiguration: () => ({ dispose() {} })
   });
   try {
-    for (const [line, modifier] of modifiers) {
-      assert.match(Prism.highlight(line, skelPrism, "skel"), new RegExp(`token keyword">${modifier}</span>`));
-      assert.match(instance.highlight(line, { language: "skel" }).value, new RegExp(`hljs-keyword">${modifier}</span>`));
+    for (const [line, keyword] of cases) {
+      assert.match(Prism.highlight(line, skelPrism, "skel"), new RegExp(`token keyword">${keyword}</span>`));
+      assert.match(instance.highlight(line, { language: "skel" }).value, new RegExp(`hljs-keyword">${keyword}</span>`));
 
       const tokens = [];
       highlightTree(skelLanguage.parser.parse(line), classHighlighter, (from, to, classes) => {
         tokens.push({ value: line.slice(from, to), classes });
       });
-      assert.ok(tokens.some(token => token.value === modifier && token.classes === "tok-keyword"));
+      assert.ok(tokens.some(token => token.value === keyword && token.classes === "tok-keyword"));
 
       const result = tokenizer.tokenize(line, true, tokenizer.getInitialState());
       assert.ok(result.tokens.some(token => token.offset === 0 && token.type === "keyword.skel"));
@@ -182,6 +183,7 @@ test("declaration modifiers are highlighted across frontend adapters", async () 
   assert.match(JSON.stringify(starryNight.highlight(source, "source.skel")), /pl-k/);
   assert.match(JSON.stringify(starryNight.highlight("ext service StorageService {", "source.skel")), /pl-k/);
   assert.match(JSON.stringify(starryNight.highlight("ext event AuditRecordedEvent {", "source.skel")), /pl-k/);
+  assert.match(JSON.stringify(starryNight.highlight("impersonator OpsActor, AdminActor", "source.skel")), /pl-k/);
 });
 
 test("adapters preserve versioned names", () => {

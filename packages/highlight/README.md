@@ -8,6 +8,8 @@ Versioned names such as `OrderApiServiceV999` and comma-separated, optionally mu
 
 Abstract configs (`abs config CacheAbsConfig eternal { ... }`) and config adoption (`config CacheConfig = CacheAbsConfig`, including imported sources) are highlighted. Language validation for these declarations requires `skelc lsp` v0.33.0 or newer.
 
+Actor authentication clauses such as `impersonator OpsActor, AdminActor` are highlighted, including lists that span lines. Language validation for these clauses requires `skelc lsp` v0.35.0 or newer.
+
 Field names such as `data: list<TItem>` are distinguished from declaration keywords such as `data PageResp<TItem>` across the adapters.
 
 Install the package with only the highlighter used by your application. All highlighter peer dependencies are optional.

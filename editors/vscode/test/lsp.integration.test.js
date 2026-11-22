@@ -670,3 +670,64 @@ test("abstract configs support local and imported adoption through LSP", {
     fs.rmSync(workspace, { recursive: true, force: true });
   }
 });
+
+test("actor impersonators support completion, navigation, formatting and diagnostics through LSP", {
+  skip: !process.env.SKELC_PATH,
+  timeout: 20000
+}, async t => {
+  if (!compilerAtLeast("v0.35.0")) {
+    t.skip("Actor impersonators require skelc v0.35.0");
+    return;
+  }
+  const fixturePath = path.resolve(__dirname, "../../../packages/highlight/test/fixtures/impersonator.skel");
+  const checked = childProcess.spawnSync(process.env.SKELC_PATH, ["check", "--skel-in", fixturePath], {
+    encoding: "utf8", timeout: 5000
+  });
+  assert.equal(checked.status, 0, checked.stdout + checked.stderr);
+  const fixture = fs.readFileSync(fixturePath, "utf8");
+  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "skel-impersonator-lsp-"));
+  const uri = pathToFileURL(path.join(workspace, "actor.skel")).href;
+  const child = childProcess.spawn(process.env.SKELC_PATH, ["lsp"], { stdio: ["pipe", "pipe", "pipe"] });
+  const peer = new LSPPeer(child.stdin, child.stdout);
+  try {
+    await peer.request("initialize", {
+      processId: process.pid, rootUri: pathToFileURL(workspace).href, capabilities: {},
+      initializationOptions: { schemaCompatibility: { diagnostics: false, codeLens: false } }
+    });
+    peer.notify("initialized", {});
+    const textDocument = { uri };
+    peer.notify("textDocument/didOpen", { textDocument: { uri, languageId: "skel", version: 1, text: fixture } });
+    assert.deepEqual((await peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri && p.version === 1)).diagnostics, []);
+
+    const lines = fixture.split("\n");
+    const clauseLine = lines.findIndex(line => line.trimStart().startsWith("impersonator UserActor"));
+    const completion = await peer.request("textDocument/completion", {
+      textDocument, position: { line: clauseLine, character: lines[clauseLine].indexOf("impersonator") + 2 }
+    });
+    assert.ok(completion.some(item => item.label === "impersonator"));
+    const referenceLine = lines.findIndex(line => line.trim() === "OpsActor");
+    const definition = await peer.request("textDocument/definition", {
+      textDocument, position: { line: referenceLine, character: lines[referenceLine].indexOf("OpsActor") + 2 }
+    });
+    assert.equal(definition.length, 1);
+    assert.equal(definition[0].uri, uri);
+    assert.equal(definition[0].range.start.line, lines.indexOf("pub actor OpsActor {"));
+    const edits = await peer.request("textDocument/formatting", { textDocument, options: { tabSize: 4, insertSpaces: true } });
+    assert.match(edits[0].newText, /impersonator UserActor, OpsActor\b/);
+
+    const emptyInfo = /actor info must have at least one member/;
+    peer.notify("textDocument/didChange", {
+      textDocument: { uri, version: 2 },
+      contentChanges: [{ text: fixture.replace(/info \{\s+impersonator: string\s+\}/, "info {}") }]
+    });
+    await peer.waitForNotification("textDocument/publishDiagnostics", p =>
+      p.uri === uri && p.version === 2 && p.diagnostics.some(d => d.severity === 1 && emptyInfo.test(d.message))
+    );
+    await peer.request("shutdown", null);
+    peer.notify("exit");
+    await waitForExit(child, 5000);
+  } finally {
+    if (child.exitCode === null) child.kill();
+    fs.rmSync(workspace, { recursive: true, force: true });
+  }
+});
