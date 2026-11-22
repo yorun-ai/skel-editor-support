@@ -15,7 +15,7 @@ Keep the editor clients as thin Language Server Protocol clients. Parsing, seman
 
 - Node.js 22 or later for repository development
 - npm
-- A compatible `skelc` executable for integration and Extension Host tests
+- A compatible `skelc` executable for LSP and Extension Host tests
 
 Install dependencies from the repository root:
 
@@ -60,16 +60,13 @@ For protocol integration, build or install a compatible skelc executable and run
 SKELC_PATH=/absolute/path/to/skelc npm run test:integration
 ```
 
-For the real Visual Studio Code Extension Host test, run:
+Run Extension Host tests with your installed VS Code.
 
 ```sh
 SKELC_PATH=/absolute/path/to/skelc npm run test:extension
 ```
 
-The local Extension Host test reuses an installed VS Code by default. Set
-`VSCODE_EXECUTABLE_PATH` for a non-standard installation. Local tests never
-download VS Code implicitly; `VSCODE_VERSION` explicitly opts into the managed
-runtime download used by CI.
+The command builds the extension and launches a separate window with a temporary test profile. Set `VSCODE_EXECUTABLE_PATH` for an installation in a non-standard location. CI sets `VSCODE_VERSION` to run a managed VS Code 1.91.0 build on Xvfb.
 
 Before submitting a pull request, also run:
 
@@ -108,11 +105,11 @@ PRs use changed-file rules; main and tag pushes do not trigger PR CI; version ta
 | --- | --- |
 | Documentation and unrelated files | CI policy tests only |
 | Workflow YAML / actionlint configuration | CI policy tests and actionlint; no application suites |
-| VS Code runtime/configuration/tests | VS Code package checks and minimum/latest skelc LSP/Extension Host tests |
+| VS Code runtime/configuration/tests | VS Code package checks and minimum/latest skelc LSP and Extension Host tests |
 | VS Code assets/themes | VS Code package checks only |
 | Frontend highlighter adapters | Highlighter package checks and Node/peer compatibility matrix |
 | Shared vocabulary | Highlighter and VS Code package checks |
-| Shared highlighter fixtures | Highlighter checks |
+| Shared highlighter fixtures | Highlighter and VS Code integration checks |
 | TextMate grammar | Highlighter and VS Code checks |
 | skelc compatibility manifest | VS Code package and integration checks |
 | Root npm manifests/lockfile or asset preparation | Both npm packages and VS Code integration |

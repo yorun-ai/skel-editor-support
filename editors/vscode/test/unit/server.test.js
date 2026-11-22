@@ -41,7 +41,7 @@ test("verifyServer accepts development and newer builds", async () => {
 
 test("verifyServer rejects unsupported and invalid versions", async () => {
   for (const [stdout, message] of [
-    [JSON.stringify({ version: "v0.0.1" }), /or newer is required/],
+    [JSON.stringify({ version: "v0.29.0" }), /or newer is required/],
     [JSON.stringify({ version: `${server.minimumVersion}-rc.1` }), /or newer is required/],
     [JSON.stringify({}), /version unknown is unsupported/],
     ["not json", /Cannot read skelc version/]
@@ -62,11 +62,4 @@ test("verifyServer explains a missing executable", async () => {
     server.verifyServer("missing-skelc", execFile),
     /Cannot run missing-skelc: the executable was not found/
   );
-});
-
-test("strict mode starts the server with a separate global flag", () => {
-  assert.deepEqual(server.serverOptions(" /tools with spaces/skelc ", true), {
-    command: "/tools with spaces/skelc", args: ["--strict", "lsp"]
-  });
-  assert.deepEqual(server.serverOptions("skelc", false).args, ["lsp"]);
 });

@@ -26,7 +26,7 @@ test('frontend adapters only select highlighter checks', () => {
 });
 test('shared inputs select their actual consumers', () => {
   assert.deepEqual(active(['packages/highlight/src/language.js']), ['node', 'vscode_package', 'highlight']);
-  assert.deepEqual(active(['packages/highlight/test/fixtures/example.skel']), ['node', 'highlight']);
+  assert.deepEqual(active(['packages/highlight/test/fixtures/impersonator.skel']), ['node', 'vscode', 'highlight']);
   assert.deepEqual(active(['packages/highlight/src/skel.tmLanguage.json']), ['node', 'vscode_package', 'vscode', 'highlight']);
   assert.deepEqual(active(['editors/vscode/skelc-compatibility.json']), ['node', 'vscode_package', 'vscode']);
 });
@@ -54,7 +54,6 @@ test('CLI handles PR and manual NUL-separated paths', () => {
       });
       assert.equal(result.status, 0, result.stderr);
       assert.match(readFileSync(output, 'utf8'), /vscode=true/);
-      assert.match(readFileSync(output, 'utf8'), /full=false/);
     }
   } finally {
     rmSync(directory, { recursive: true, force: true });
@@ -99,7 +98,6 @@ test('workflow diffs PRs and manual commits without forcing all components', () 
     for (const [event, before] of [['pull_request', base], ['workflow_dispatch', '']]) {
       const scope = run(event, before, head);
       assert.equal(scope.vscode, 'true');
-      assert.equal(scope.full, 'false');
     }
     assert.ok(Object.values(run('workflow_dispatch', '', head, true)).every(value => value === 'true'));
   } finally {
@@ -152,7 +150,8 @@ test('selected PR components include compatibility checks before merging', () =>
   assert.match(triggers, /  pull_request:/);
   assert.doesNotMatch(triggers, /  push:/);
   for (const name of ['Check out latest tested skelc', 'Build latest tested skelc language server',
-    'Test latest skelc LSP integration', 'Test latest skelc in Extension Host']) {
+    'Test minimum supported skelc LSP integration', 'Test latest skelc LSP integration',
+    'Test minimum supported skelc in Extension Host', 'Test latest skelc in Extension Host']) {
     const step = workflow.split(`      - name: ${name}\n`)[1]?.split('\n      - ')[0];
     assert.ok(step, name);
     assert.doesNotMatch(step, /^        if:/m, name);

@@ -31,24 +31,21 @@ skelc version
 
 Install the `Skeleton DSL Support` extension from the VS Code Marketplace, then open a `.skel` file. The extension starts `skelc lsp` from `PATH`.
 
-The extension supports VS Code 1.91 or newer and requires `skelc v0.14.0` or newer. The language server reports syntax, source-directory-scoped semantic diagnostics, and schema compatibility changes while you edit; use `skelc check` and `skelc schema diff` for reproducible terminal and CI validation. Decorator completion is filtered by the following target and omits decorators already present on it. Deprecated declarations and elements are identified in completion, hover, and symbol views.
+The extension supports VS Code 1.91 or newer and requires `skelc v0.30.0` or newer. The language server reports syntax, source-directory-scoped semantic diagnostics, and schema compatibility changes while you edit; use `skelc check` and `skelc schema diff` for reproducible terminal and CI validation. Decorator completion is filtered by the following target and omits decorators already present on it. Deprecated declarations and elements are identified in completion, hover, and symbol views.
 
 When the configured skelc executable is replaced, the plugin offers **Restart Now** or **Later** after verifying the replacement. The running server continues until you choose to restart; choosing Later suppresses further prompts for that same update. Detection uses directory change notifications and a check when the editor regains focus, without periodic polling. Symbolic links and their resolved targets are monitored. No IDE restart is required.
-
-Use skelc v0.18.0 or newer for `api service` diagnostics and completion, and skelc v0.24.0 or newer for `ext service` and `ext event` diagnostics and completion. Authentication modes `auth required`, `auth optional`, `auth anonymous`, and web-only `auth off` require skelc v0.26.0 or newer for diagnostics and completion. Legacy bare `auth`/`noauth` remain highlighted, but skelc v0.31.0 and newer reject them. Syntax highlighting recognizes these modes, `api`, and `ext` independently of the installed compiler. Config values containing nested data, binary values and nullable generic parameters require skelc v0.23.0 or newer for language intelligence.
 
 Names with `Vn` suffixes (such as `OrderApiServiceV10`) and comma-separated actor audiences (such as `for UserActor, AdminActor`) require skelc v0.32.0 or newer for language intelligence. Comma lists may span lines. This compiler warns about repeated `for` clauses and empty audience blocks; duplicate actors are errors.
 
 Abstract configs (`abs config CacheAbsConfig eternal { ... }`) and config adoption (`config CacheConfig = CacheAbsConfig`, including imported sources) require skelc v0.33.0 or newer for language intelligence. Their syntax highlighting works independently of skelc.
 
-The extension highlights clauses such as `impersonator OpsActor, AdminActor` in actor authentication blocks, including lists that span lines. Use skelc v0.35.0 or newer for completion, diagnostics, formatting, and navigation for these clauses. CI tests the extension with skelc v0.14.0 and v0.35.0.
+The extension highlights clauses such as `impersonator OpsActor, AdminActor` in actor authentication blocks, including lists that span lines. Use skelc v0.35.0 or newer for completion, diagnostics, formatting, and navigation for these clauses. CI runs LSP and Extension Host tests with skelc v0.30.0 and v0.35.0.
 
 ## Configuration
 
 | Setting | Default | Description |
 | --- | --- | --- |
 | `skelc.path` | `skelc` | Executable used to start the language server. Changing it restarts the server. |
-| `skelc.strict` | `false` | Pass `--strict` to skelc v0.18.0 or newer. With v0.31.0 or newer, validation is identical to the default; older versions promote migration warnings to errors. Changing it restarts the server. |
 | `skelc.trace.server` | `off` | Protocol tracing: `off`, `messages`, or `verbose`. |
 | `skelc.schemaCompatibility.diagnostics` | `true` | Report breaking and dangerous schema changes while editing. |
 | `skelc.schemaCompatibility.includeCompatible` | `false` | Also report compatible changes as hints. |
@@ -71,7 +68,7 @@ Untitled Skel documents receive language-server support. Virtual and untrusted w
 
 If the server does not start:
 
-1. Run `skelc version` in the same environment as the VS Code extension host and confirm the version is v0.14.0 or newer.
+1. Run `skelc version` in the same environment as the VS Code extension host and confirm the version is v0.30.0 or newer.
 2. Set `skelc.path` to the executable's absolute path when it is not on `PATH`.
 3. Run `Skel: Restart Language Server`.
 4. Run `Skel: Show Language Server Output` and set `skelc.trace.server` to `messages` or `verbose` when protocol details are needed.
@@ -87,17 +84,17 @@ npm run check
 
 Open this repository in VS Code and press F5 to launch the portable Extension Development Host configuration.
 
-Protocol and Extension Host tests require a local skelc build with LSP support:
+Run LSP integration tests from the terminal with a compatible skelc executable.
 
 ```sh
 SKELC_PATH=/absolute/path/to/skelc npm run test:integration
-SKELC_PATH=/absolute/path/to/skelc npm run test:extension
 ```
 
-Local Extension Host tests reuse an installed VS Code and do not download a
-test runtime. Set `VSCODE_EXECUTABLE_PATH` when VS Code is installed in a
-non-standard location. CI may set `VSCODE_VERSION` to opt into a managed,
-versioned test runtime.
+Run Extension Host tests with an installed copy of VS Code.
+
+```sh
+SKELC_PATH=/absolute/path/to/skelc npm run test:extension
+```
 
 ## License
 
