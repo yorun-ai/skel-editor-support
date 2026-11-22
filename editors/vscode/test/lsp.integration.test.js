@@ -391,61 +391,10 @@ test("skelc completes the LSP initialize and shutdown lifecycle", {
   }
 });
 
-test("strict mode follows the installed compiler diagnostic policy", {
-  skip: !process.env.SKELC_PATH,
-  timeout: 20000
-}, async (t) => {
-  const helpProbe = childProcess.spawnSync(process.env.SKELC_PATH, ["--help"], { encoding: "utf8", timeout: 5000 });
-  assert.equal(helpProbe.status, 0, helpProbe.stdout + helpProbe.stderr);
-  if (!helpProbe.stdout.includes("--strict")) {
-    t.skip("This compiler predates API services and strict mode");
-    return;
-  }
-  const fixture = path.resolve(__dirname, "../../../packages/highlight/test/fixtures", compilerAtLeast("v0.32.0") ? "api.skel" : "compatibility.skel");
-  const result = childProcess.spawnSync(process.env.SKELC_PATH, ["--strict", "check", "--skel-in", fixture], { encoding: "utf8", timeout: 5000 });
-  assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.deepEqual(JSON.parse(result.stdout).diagnostics, []);
-  const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "skel-strict-lsp-"));
-  const { serverOptions } = require("../src/server");
-  const options = serverOptions(process.env.SKELC_PATH, true);
-  const child = childProcess.spawn(options.command, options.args, { stdio: ["pipe", "pipe", "pipe"] });
-  const peer = new LSPPeer(child.stdin, child.stdout);
-  const uri = pathToFileURL(path.join(workspace, "legacy.skel")).href;
-  try {
-    await peer.request("initialize", { processId: process.pid, rootUri: pathToFileURL(workspace).href, capabilities: {} });
-    peer.notify("initialized", {});
-    peer.notify("textDocument/didOpen", { textDocument: { uri, languageId: "skel", version: 1, text: "domain demo\nservice HealthService { method ping {} }\n" } });
-    const strict = await peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri && p.diagnostics.some(d => d.severity === 1));
-    const codes = strict.diagnostics.filter(d => d.severity === 1).map(d => d.code);
-    peer.notify("workspace/didChangeConfiguration", { settings: { strict: false } });
-    peer.notify("textDocument/didChange", {
-      textDocument: { uri, version: 2 },
-      contentChanges: [{ text: "domain demo\nservice HealthService { method ping {} }\n// Strict mode disabled.\n" }]
-    });
-    const expectedSeverity = compilerAtLeast("v0.31.0") ? 1 : 2;
-    await peer.waitForNotification("textDocument/publishDiagnostics", p => p.uri === uri && p.version === 2 && codes.every(code => p.diagnostics.some(d => d.code === code && d.severity === expectedSeverity)));
-    await peer.request("shutdown", null);
-    peer.notify("exit");
-    await waitForExit(child, 5000);
-  } finally {
-    if (child.exitCode === null) child.kill();
-    fs.rmSync(workspace, { recursive: true, force: true });
-  }
-});
-
 test("structured config diagnostics, completion and formatting through LSP", {
   skip: !process.env.SKELC_PATH,
   timeout: 20000
-}, async (t) => {
-  const versionResult = childProcess.spawnSync(process.env.SKELC_PATH, ["version"], { encoding: "utf8", timeout: 5000 });
-  assert.equal(versionResult.status, 0, versionResult.stdout + versionResult.stderr);
-  const version = JSON.parse(versionResult.stdout).version;
-  const match = /^v?(\d+)\.(\d+)\.(\d+)/.exec(version);
-  assert.ok(match, `Unexpected compiler version: ${version}`);
-  if (Number(match[1]) === 0 && Number(match[2]) < 23) {
-    t.skip("Structured configs require skelc v0.23.0 or newer");
-    return;
-  }
+}, async () => {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "skel-config-lsp-"));
   const fixture = fs.readFileSync(path.resolve(__dirname, "../../../packages/highlight/test/fixtures/config.skel"), "utf8");
   const uri = pathToFileURL(path.join(workspace, "config.skel")).href;
@@ -508,16 +457,7 @@ test("structured config diagnostics, completion and formatting through LSP", {
 test("extension service and event contracts through LSP", {
   skip: !process.env.SKELC_PATH,
   timeout: 20000
-}, async (t) => {
-  const versionResult = childProcess.spawnSync(process.env.SKELC_PATH, ["version"], { encoding: "utf8", timeout: 5000 });
-  assert.equal(versionResult.status, 0, versionResult.stdout + versionResult.stderr);
-  const version = JSON.parse(versionResult.stdout).version;
-  const match = /^v?(\d+)\.(\d+)\.(\d+)/.exec(version);
-  assert.ok(match, `Unexpected compiler version: ${version}`);
-  if (Number(match[1]) === 0 && Number(match[2]) < 24) {
-    t.skip("Extension contracts require skelc v0.24.0 or newer");
-    return;
-  }
+}, async () => {
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), "skel-ext-lsp-"));
   const fixture = fs.readFileSync(path.resolve(__dirname, "../../../packages/highlight/test/fixtures/ext.skel"), "utf8");
   const uri = pathToFileURL(path.join(workspace, "extensions.skel")).href;

@@ -15,11 +15,11 @@ Checks run before merging, with editor components selected by changed files.
 
 See [the changed-file table](../CONTRIBUTING.md#ci-scope). Documentation and unrelated changes run lightweight policy tests. Workflow YAML and actionlint configuration changes also run actionlint, without starting application suites. The required gate checks this optional lint job as well. No workflow-level path filter is used: `CI / Required Checks` must always report a result.
 
-PRs test both the minimum and latest configured skelc for selected VS Code changes. Selected highlighter changes run the Node/peer matrix. Manual CI uses the same check depth; `full=true` deliberately selects all components.
+PRs run LSP and Extension Host tests against both configured skelc versions for selected VS Code changes. The Extension Host steps run VS Code 1.91.0 on Xvfb. Selected highlighter changes run the Node/peer matrix. Manual CI uses the same check depth; `full=true` deliberately selects all components.
 
 Superseded PR runs are cancelled. The main rulesets require up-to-date PRs, successful `CI / Required Checks`, and squash merging. No duplicate main CI is needed. The required gate rejects failures, cancellations, missing selection outputs and unexpected skips.
 
-Classification and the required gate have a 5-minute limit. Workflow lint has a 10-minute limit, package and highlighter checks have a 15-minute limit, and VS Code integration has a 30-minute limit. Individual LSP and Extension Host tests have 5- and 10-minute limits, respectively. Each publishing job has a 20-minute limit.
+Classification and the required gate have a 5-minute limit. Workflow lint has a 10-minute limit, package and highlighter checks have a 15-minute limit, and VS Code integration has a 30-minute limit. LSP test steps have a 5-minute limit and Extension Host test steps have a 10-minute limit. Each publishing job has a 20-minute limit.
 
 ## Publishing
 

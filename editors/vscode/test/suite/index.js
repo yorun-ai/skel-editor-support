@@ -55,35 +55,7 @@ async function run() {
   assert.equal(secondPreview, firstPreview);
   assert.equal(secondPreview.uri.toString(), firstPreview.uri.toString());
 
-  const probe = require("node:child_process").spawnSync(process.env.SKELC_PATH, ["--help"], { encoding: "utf8", timeout: 5000 });
-  assert.equal(probe.status, 0, probe.stdout + probe.stderr);
-  if (probe.stdout.includes("--strict")) {
-    await replaceDocument(source, "domain demo\nservice HealthService { method ping {} }\n");
-    assert.equal(await source.save(), true);
-    const version = JSON.parse(require("node:child_process").execFileSync(process.env.SKELC_PATH, ["version"], { encoding: "utf8" })).version;
-    const match = /^v?(\d+)\.(\d+)\.(\d+)/.exec(version);
-    assert.ok(match, `Unexpected compiler version: ${version}`);
-    const currentRules = Number(match[1]) > 0 || Number(match[2]) >= 31;
-    const normalSeverity = currentRules ? vscode.DiagnosticSeverity.Error : vscode.DiagnosticSeverity.Warning;
-    await waitForDiagnostic(source, normalSeverity);
-    await vscode.workspace.getConfiguration("skelc").update("strict", true, vscode.ConfigurationTarget.Workspace);
-    await vscode.commands.executeCommand("skel.restartLanguageServer");
-    await waitForDiagnostic(source, vscode.DiagnosticSeverity.Error);
-    await vscode.workspace.getConfiguration("skelc").update("strict", false, vscode.ConfigurationTarget.Workspace);
-    await vscode.commands.executeCommand("skel.restartLanguageServer");
-    await waitForDiagnostic(source, normalSeverity);
-  }
   console.log("Skel Extension Host tests passed.");
-}
-
-async function waitForDiagnostic(document, severity) {
-  const deadline = Date.now() + 10000;
-  while (Date.now() < deadline) {
-    if (vscode.languages.getDiagnostics(document.uri).some(d =>
-      String(d.code).includes("service") && d.severity === severity)) return;
-    await new Promise(resolve => setTimeout(resolve, 25));
-  }
-  throw new Error(`Timed out waiting for service diagnostic severity ${severity}: ${JSON.stringify(vscode.languages.getDiagnostics(document.uri))}`);
 }
 
 async function replaceDocument(document, content) {

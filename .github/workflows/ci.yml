@@ -27,7 +27,6 @@ jobs:
       vscode: ${{ steps.scope.outputs.vscode }}
       highlight: ${{ steps.scope.outputs.highlight }}
       workflow: ${{ steps.scope.outputs.workflow }}
-      full: ${{ steps.scope.outputs.full }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -110,9 +109,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Build editor support packages
-        run: npm run build --workspace skeleton
 
       - name: Read skelc compatibility
         id: skelc-compatibility

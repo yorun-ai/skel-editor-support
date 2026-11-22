@@ -2,7 +2,7 @@ import { readFileSync, appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
 export function classifyChanges(paths, full = false) {
-  const scope = { node: full, vscode_package: full, vscode: full, highlight: full, workflow: full, full };
+  const scope = { node: full, vscode_package: full, vscode: full, highlight: full, workflow: full };
   for (const path of paths) {
     if (/\.md$/.test(path)) continue;
     if (path.startsWith('.github/workflows/') || path === '.github/actionlint.yaml') scope.workflow = true;
@@ -13,6 +13,7 @@ export function classifyChanges(paths, full = false) {
       scope.highlight = true;
       if (['packages/highlight/src/language.js', 'packages/highlight/package.json'].includes(path)) scope.vscode_package = true;
       if (path === 'packages/highlight/src/skel.tmLanguage.json') scope.vscode_package = scope.vscode = true;
+      if (path.startsWith('packages/highlight/test/fixtures/')) scope.vscode = true;
     } else if (['package.json', 'package-lock.json', '.npmrc', 'scripts/prepare-assets.js'].includes(path)) {
       scope.highlight = scope.vscode_package = scope.vscode = true;
     } else if (path === 'LICENSE') {

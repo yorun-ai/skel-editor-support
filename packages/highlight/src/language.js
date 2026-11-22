@@ -4,9 +4,8 @@ const entryKeywords = Object.freeze([
 
 const declarationKeywords = Object.freeze(["domain", "import", ...entryKeywords]);
 
-// Retain noauth for lexical recognition of legacy files; skelc diagnoses it.
 const controlKeywords = Object.freeze([
-  "pub", "api", "ext", "abs", "as", "for", "auth", "noauth", "required", "optional", "anonymous", "off",
+  "pub", "api", "ext", "abs", "as", "for", "auth", "required", "optional", "anonymous", "off",
   "permission", "credential", "impersonator", "info", "method", "require",
   "trigger", "input", "output", "payload", "action", "check", "all", "any",
   "eternal", "instant"
