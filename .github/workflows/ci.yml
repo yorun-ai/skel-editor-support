@@ -26,7 +26,6 @@ jobs:
       vscode_package: ${{ steps.scope.outputs.vscode_package }}
       vscode: ${{ steps.scope.outputs.vscode }}
       highlight: ${{ steps.scope.outputs.highlight }}
-      jetbrains: ${{ steps.scope.outputs.jetbrains }}
       workflow: ${{ steps.scope.outputs.workflow }}
       full: ${{ steps.scope.outputs.full }}
     steps:
@@ -224,75 +223,10 @@ jobs:
       - name: Validate syntax-highlighting consumers
         run: npm run check --workspace @yorun-ai/skel-highlight
 
-  jetbrains:
-    needs: changes
-    if: needs.changes.outputs.jetbrains == 'true'
-    name: JetBrains plugin
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-      - uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: 21
-      - uses: gradle/actions/setup-gradle@v6
-      - name: Test optional signing configuration
-        timeout-minutes: 10
-        run: node --test scripts/jetbrains-signing.test.mjs
-      - name: Read supported skelc versions
-        id: compatibility
-        run: |
-          echo "minimum=$(node -p 'require("./editors/vscode/skelc-compatibility.json").minimumVersion')" >> "$GITHUB_OUTPUT"
-          echo "latest=$(node -p 'require("./editors/vscode/skelc-compatibility.json").latestTestedVersion')" >> "$GITHUB_OUTPUT"
-      - name: Check out minimum skelc for JetBrains
-        uses: actions/checkout@v7
-        with:
-          repository: yorun-ai/skel
-          ref: ${{ steps.compatibility.outputs.minimum }}
-          path: .test/skelc-jetbrains-minimum
-      - name: Check out latest skelc for JetBrains
-        uses: actions/checkout@v7
-        with:
-          repository: yorun-ai/skel
-          ref: ${{ steps.compatibility.outputs.latest }}
-          path: .test/skelc-jetbrains-latest
-      - uses: actions/setup-go@v7
-        with:
-          go-version-file: .test/skelc-jetbrains-latest/go.mod
-          cache-dependency-path: |
-            .test/skelc-jetbrains-minimum/go.sum
-            .test/skelc-jetbrains-latest/go.sum
-      - name: Build minimum skelc for JetBrains
-        working-directory: .test/skelc-jetbrains-minimum
-        run: GOWORK=off go build -o "$RUNNER_TEMP/skelc-minimum" ./cmd/skelc
-      - name: Build latest skelc for JetBrains
-        working-directory: .test/skelc-jetbrains-latest
-        run: GOWORK=off go build -o "$RUNNER_TEMP/skelc-latest" ./cmd/skelc
-      - name: Test plugin with minimum skelc
-        timeout-minutes: 15
-        working-directory: editors/jetbrains
-        env:
-          SKELC_PATH: ${{ runner.temp }}/skelc-minimum
-        run: xvfb-run -a ./gradlew test
-      - name: Test plugin with latest skelc
-        timeout-minutes: 15
-        working-directory: editors/jetbrains
-        env:
-          SKELC_PATH: ${{ runner.temp }}/skelc-latest
-        run: xvfb-run -a ./gradlew test
-      - name: Verify supported IDEs
-        timeout-minutes: 40
-        working-directory: editors/jetbrains
-        run: ./gradlew verifyPlugin
-
   ci-checks:
     name: CI / Required Checks
     if: ${{ always() }}
-    needs: [changes, check, vscode, highlight-compatibility, jetbrains, workflow]
+    needs: [changes, check, vscode, highlight-compatibility, workflow]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -303,10 +237,9 @@ jobs:
           echo "$NEEDS" | jq --exit-status '
             .changes.result == "success" and
             (.changes.outputs as $scope |
-              all(["workflow", "node", "vscode", "jetbrains", "highlight"][];
+              all(["workflow", "node", "vscode", "highlight"][];
                 . as $key | $scope[$key] == "true" or $scope[$key] == "false") and
               (.workflow.result == (if $scope.workflow == "true" then "success" else "skipped" end)) and
               (.check.result == (if $scope.node == "true" then "success" else "skipped" end)) and
               (.vscode.result == (if $scope.vscode == "true" then "success" else "skipped" end)) and
-              (.jetbrains.result == (if $scope.jetbrains == "true" then "success" else "skipped" end)) and
               (."highlight-compatibility".result == (if $scope.highlight == "true" then "success" else "skipped" end)))'

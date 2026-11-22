@@ -15,11 +15,3 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
-
-  - package-ecosystem: gradle
-    directory: /editors/jetbrains
-    schedule:
-      interval: monthly
-    groups:
-      jetbrains-dependencies:
-        patterns: ["*"]

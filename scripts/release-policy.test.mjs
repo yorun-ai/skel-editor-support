@@ -3,12 +3,11 @@ import assert from 'node:assert/strict';
 import { validateRelease, main } from './release-policy.mjs';
 const fixture = { tag: 'v1.2.3', sha: 'a'.repeat(40), release: { tag_name: 'v1.2.3', draft: false, published_at: '2026-09-05' } };
 test('version tags select independent publication jobs', () => {
-  assert.deepEqual(validateRelease(fixture), { commit: 'a'.repeat(40), vscode: true, npm: true, jetbrains: false });
-  for (const artifacts of ['vscode', 'npm', 'jetbrains']) {
-    const result = validateRelease({ ...fixture, artifacts, jetbrainsEnabled: true });
+  assert.deepEqual(validateRelease(fixture), { commit: 'a'.repeat(40), vscode: true, npm: true });
+  for (const artifacts of ['vscode', 'npm']) {
+    const result = validateRelease({ ...fixture, artifacts });
     assert.deepEqual(Object.keys(result).filter(key => result[key] === true), [artifacts]);
   }
-  assert.throws(() => validateRelease({ ...fixture, artifacts: 'jetbrains' }), /disabled/);
   assert.throws(() => validateRelease({ ...fixture, artifacts: 'other' }), /selection/);
 });
 test('invalid versions cannot publish', () => {
@@ -49,7 +48,7 @@ test('release orchestration validates artifacts without querying CI history', as
       return JSON.stringify([[{ ...fixture.release, assets: [] }]]);
     };
     main({ RELEASE_TAG: 'v1.2.3', GITHUB_REPOSITORY: 'owner/repo', GITHUB_OUTPUT: output, ARTIFACTS: 'npm' }, run);
-    assert.equal(readFileSync(output, 'utf8'), `commit=${'a'.repeat(40)}\nvscode=false\nnpm=true\njetbrains=false\n`);
+    assert.equal(readFileSync(output, 'utf8'), `commit=${'a'.repeat(40)}\nvscode=false\nnpm=true\n`);
     assert.equal(calls.filter(call => call[0] === 'gh').length, 1);
     assert.ok(calls.some(call => call.includes('refs/tags/v0.14.0')));
     writeFileSync(output, '');
@@ -59,27 +58,5 @@ test('release orchestration validates artifacts without querying CI history', as
   } finally {
     process.chdir(cwd);
     rmSync(dir, { recursive: true, force: true });
-  }
-});
-
-test('workflow preflight rejects missing tokens and partial signing without revealing credentials', async () => {
-  const { readFileSync } = await import('node:fs');
-  const { spawnSync } = await import('node:child_process');
-  const workflow = readFileSync('.github/workflows/publish.yml', 'utf8');
-  const shell = workflow.split('      - name: Check JetBrains publishing credentials')[1]
-    .split('        run: |\n')[1].split('      - uses:')[0]
-    .split('\n').map(line => line.slice(10)).join('\n');
-  for (const [token, certificate, key, success] of [
-    ['', '', '', false], [' \n', '', '', false],
-    ['fixture-token', '', '', true], ['fixture-token', ' \n', '\t', true],
-    ['fixture-token', 'fixture-cert', 'fixture-key', true],
-    ['fixture-token', 'fixture-cert', '', false], ['fixture-token', '', 'fixture-key', false],
-  ]) {
-    const result = spawnSync('bash', ['-eo', 'pipefail', '-c', shell], {
-      encoding: 'utf8', env: { ...process.env, JETBRAINS_MARKETPLACE_TOKEN: token,
-        JETBRAINS_CERTIFICATE_CHAIN: certificate, JETBRAINS_PRIVATE_KEY: key },
-    });
-    assert.equal(result.status === 0, success, result.stderr);
-    assert.doesNotMatch(result.stdout + result.stderr, /fixture-(token|cert|key)/);
   }
 });

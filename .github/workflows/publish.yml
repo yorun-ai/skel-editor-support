@@ -12,7 +12,7 @@ on:
       artifacts:
         description: Recover only the selected publication
         type: choice
-        options: [all, vscode, npm, jetbrains]
+        options: [all, vscode, npm]
         default: all
 
 permissions:
@@ -36,7 +36,6 @@ jobs:
       commit: ${{ steps.release.outputs.commit }}
       vscode: ${{ steps.release.outputs.vscode }}
       npm: ${{ steps.release.outputs.npm }}
-      jetbrains: ${{ steps.release.outputs.jetbrains }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -55,7 +54,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           ARTIFACTS: ${{ inputs.artifacts || 'all' }}
-          JETBRAINS_ENABLED: ${{ vars.JETBRAINS_MARKETPLACE_ENABLED }}
         run: node ../automation/scripts/release-policy.mjs
 
   marketplace:
@@ -191,77 +189,10 @@ jobs:
           PUBLICATION_CHANNEL: npm
         run: node publication-automation/scripts/release-publication.mjs record
 
-  jetbrains:
-    name: JetBrains Marketplace
-    needs: validate
-    if: needs.validate.outputs.jetbrains == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    environment: jetbrains-marketplace
-    permissions:
-      contents: write
-    steps:
-      - name: Check JetBrains publishing credentials
-        env:
-          JETBRAINS_MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
-          JETBRAINS_CERTIFICATE_CHAIN: ${{ secrets.JETBRAINS_CERTIFICATE_CHAIN }}
-          JETBRAINS_PRIVATE_KEY: ${{ secrets.JETBRAINS_PRIVATE_KEY }}
-        run: |
-          if [ -z "${JETBRAINS_MARKETPLACE_TOKEN//[[:space:]]/}" ]; then
-            echo "JETBRAINS_MARKETPLACE_TOKEN is required" >&2
-            exit 1
-          fi
-          certificate="${JETBRAINS_CERTIFICATE_CHAIN//[[:space:]]/}"
-          key="${JETBRAINS_PRIVATE_KEY//[[:space:]]/}"
-          if { [ -n "$certificate" ] && [ -z "$key" ]; } || { [ -z "$certificate" ] && [ -n "$key" ]; }; then
-            echo "Set both JETBRAINS_CERTIFICATE_CHAIN and JETBRAINS_PRIVATE_KEY, or leave both unset" >&2
-            exit 1
-          fi
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-          ref: ${{ needs.validate.outputs.commit }}
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-      - uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: 21
-      - uses: gradle/actions/setup-gradle@v6
-      - name: Apply release version
-        run: echo "ORG_GRADLE_PROJECT_pluginVersion=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
-      - name: Verify release plugin
-        timeout-minutes: 40
-        working-directory: editors/jetbrains
-        run: ./gradlew verifyPlugin
-      - name: Publish plugin (sign when configured)
-        timeout-minutes: 10
-        working-directory: editors/jetbrains
-        env:
-          JETBRAINS_MARKETPLACE_TOKEN: ${{ secrets.JETBRAINS_MARKETPLACE_TOKEN }}
-          JETBRAINS_CERTIFICATE_CHAIN: ${{ secrets.JETBRAINS_CERTIFICATE_CHAIN }}
-          JETBRAINS_PRIVATE_KEY: ${{ secrets.JETBRAINS_PRIVATE_KEY }}
-          JETBRAINS_PRIVATE_KEY_PASSWORD: ${{ secrets.JETBRAINS_PRIVATE_KEY_PASSWORD }}
-        run: |
-          test -n "$JETBRAINS_MARKETPLACE_TOKEN"
-          ./gradlew publishPlugin
-
-      - name: Check out publication helper
-        uses: actions/checkout@v7
-        with:
-          path: publication-automation
-      - name: Record successful submission
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
-          PUBLICATION_CHANNEL: jetbrains
-        run: node publication-automation/scripts/release-publication.mjs record
-
   complete:
     name: Verify channels and publish Release
     if: ${{ always() }}
-    needs: [validate, marketplace, npm, jetbrains]
+    needs: [validate, marketplace, npm]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -275,6 +206,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_COMMIT: ${{ needs.validate.outputs.commit }}
-          JETBRAINS_ENABLED: ${{ vars.JETBRAINS_MARKETPLACE_ENABLED }}
           NEEDS: ${{ toJSON(needs) }}
         run: node scripts/release-publication.mjs complete

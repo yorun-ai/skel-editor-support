@@ -4,11 +4,10 @@ Thank you for contributing to the editor integrations and syntax-highlighting pa
 
 ## Repository Scope
 
-This repository contains two npm workspace packages and a Gradle plugin:
+This repository contains two npm workspace packages:
 
 - `packages/highlight` owns the canonical TextMate grammar and adapters for frontend highlighting libraries.
 - `editors/vscode` owns the Visual Studio Code extension, language configuration, theme, Marketplace metadata, and the client that starts `skelc lsp`.
-- `editors/jetbrains` owns the Kotlin IntelliJ Platform plugin and its Gradle validation and publishing.
 
 Keep the editor clients as thin Language Server Protocol clients. Parsing, semantic analysis, formatting, diagnostics, and other language intelligence belong in the independent [`yorun-ai/skel`](https://github.com/yorun-ai/skel) repository.
 
@@ -80,8 +79,6 @@ git diff --check
 
 Add focused tests for changes to client startup, configuration, protocol behavior, grammar coverage, or highlighting adapters.
 
-For JetBrains changes, also follow [its development guide](editors/jetbrains/README.md) and run the Gradle tests with a real skelc executable. JVM tests are separate from `npm run check`; CI requires both.
-
 ## Versions and Release Artifacts
 
 Workspace source manifests use `0.0.0` as a development placeholder. Do not replace it with a release version in a pull request.
@@ -111,16 +108,15 @@ PRs use changed-file rules; main and tag pushes do not trigger PR CI; version ta
 | --- | --- |
 | Documentation and unrelated files | CI policy tests only |
 | Workflow YAML / actionlint configuration | CI policy tests and actionlint; no application suites |
-| JetBrains code/build inputs | Java 21 plugin tests, optional-signing regression checks and Plugin Verifier |
 | VS Code runtime/configuration/tests | VS Code package checks and minimum/latest skelc LSP/Extension Host tests |
 | VS Code assets/themes | VS Code package checks only |
 | Frontend highlighter adapters | Highlighter package checks and Node/peer compatibility matrix |
-| Shared vocabulary | Highlighter, VS Code package checks and JetBrains tests |
-| Shared highlighter fixtures | Highlighter checks and JetBrains tests |
+| Shared vocabulary | Highlighter and VS Code package checks |
+| Shared highlighter fixtures | Highlighter checks |
 | TextMate grammar | Highlighter and VS Code checks |
-| skelc compatibility manifest | VS Code and JetBrains checks |
-| Root npm manifests/lockfile or asset preparation | Both npm packages and VS Code integration; no Gradle |
+| skelc compatibility manifest | VS Code package and integration checks |
+| Root npm manifests/lockfile or asset preparation | Both npm packages and VS Code integration |
 
-Every selected component runs its compatibility checks before merging: highlighter Node/peer matrix, minimum/latest skelc for VS Code, and JetBrains Plugin Verifier. Manual CI with `full=true` selects every component; the default manual run selects only the commit's changed components, with the same check depth. PRs compare against their merge base. See [CI and release lifecycle](.github/CI.md) for tag, Release and recovery behavior.
+Every selected component runs its compatibility checks before merging: the highlighter Node/peer matrix and minimum/latest skelc for VS Code. Manual CI uses the selected commit’s changed files to choose checks. Set `full=true` to check every component. PRs compare against their merge base. See [CI and release lifecycle](.github/CI.md) for tag, Release and recovery behavior.
 
 The required check rejects failures, cancellations and unexpectedly skipped jobs. Add new build inputs/components to `scripts/ci-scope.mjs` with regression tests; do not broaden unrelated changes into a full test run.

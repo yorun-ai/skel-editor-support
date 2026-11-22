@@ -4,12 +4,12 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import { publication } from './release-publication.mjs';
 
-function fixture(jetbrains = false) {
+function fixture() {
   const assets = new Map();
   let release;
   const calls = [];
   const control = {};
-  const env = { RELEASE_TAG: 'v1.2.3', RELEASE_COMMIT: 'a'.repeat(40), GITHUB_REPOSITORY: 'test/repo', JETBRAINS_ENABLED: String(jetbrains) };
+  const env = { RELEASE_TAG: 'v1.2.3', RELEASE_COMMIT: 'a'.repeat(40), GITHUB_REPOSITORY: 'test/repo' };
   const run = (command, args) => {
     assert.equal(command, 'gh');
     calls.push(args);
@@ -36,8 +36,8 @@ function fixture(jetbrains = false) {
   return { env, assets, calls, use, control, makeLegacy() { release = { tag_name: env.RELEASE_TAG, draft: false }; assets.clear(); }, published: () => release?.draft === false };
 }
 const needs = (selected = ['vscode', 'npm'], failed) => ({
-  validate: { result: 'success', outputs: Object.fromEntries(['vscode', 'npm', 'jetbrains'].map(channel => [channel, String(selected.includes(channel))])) },
-  ...Object.fromEntries([['vscode', 'marketplace'], ['npm', 'npm'], ['jetbrains', 'jetbrains']].map(([channel, job]) => [job, { result: job === failed ? 'failure' : selected.includes(channel) ? 'success' : 'skipped' }])),
+  validate: { result: 'success', outputs: Object.fromEntries(['vscode', 'npm'].map(channel => [channel, String(selected.includes(channel))])) },
+  ...Object.fromEntries([['vscode', 'marketplace'], ['npm', 'npm']].map(([channel, job]) => [job, { result: job === failed ? 'failure' : selected.includes(channel) ? 'success' : 'skipped' }])),
 });
 test('partial success remains draft; a later single-channel recovery completes the release', () => {
   const f = fixture();
@@ -54,23 +54,15 @@ test('partial success remains draft; a later single-channel recovery completes t
   f.use(client => client.complete(needs([])));
   assert.equal(f.calls.filter(args => args[1] === 'edit').length, before);
 });
-test('enabled JetBrains submission is required, without claiming review approval', () => {
-  const f = fixture(true);
-  f.use(client => client.prepare('Notes'));
-  for (const channel of ['vscode', 'npm']) f.use(client => client.record(channel));
-  assert.throws(() => f.use(client => client.complete(needs(['vscode', 'npm', 'jetbrains']))), /Missing receipt/);
-  f.use(client => client.record('jetbrains'));
-  assert.equal(JSON.parse(f.assets.get('publication-jetbrains.json')).status, 'submitted');
-  assert.throws(() => f.use(client => client.complete(needs(['vscode', 'npm', 'jetbrains'], 'jetbrains'))), /did not complete/);
-  f.use(client => client.complete(needs(['vscode', 'npm', 'jetbrains'])));
-  assert.equal(f.published(), true);
-});
 test('source mismatches and changing required channels cannot bypass completion', () => {
-  const f = fixture(true);
+  const f = fixture();
   f.use(client => client.prepare('Notes'));
-  f.env.JETBRAINS_ENABLED = 'false';
+  const manifest = JSON.parse(f.assets.get('publication.json'));
+  f.assets.set('publication.json', JSON.stringify({ ...manifest, required: [...manifest.required, 'jetbrains'] }));
   assert.throws(() => f.use(client => client.prepare('Notes')), /changed/);
-  f.env.JETBRAINS_ENABLED = 'true';
+  assert.throws(() => f.use(client => client.complete(needs([]))), /manifest mismatch/);
+  assert.equal(f.published(), false);
+  f.assets.set('publication.json', JSON.stringify(manifest));
   f.env.RELEASE_COMMIT = 'b'.repeat(40);
   assert.throws(() => f.use(client => client.record('npm')), /mismatch/);
   f.env.RELEASE_COMMIT = 'a'.repeat(40);
