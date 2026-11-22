@@ -9,12 +9,9 @@ import { classifyChanges } from './ci-scope.mjs';
 const active = paths => Object.entries(classifyChanges(paths)).filter(([, value]) => value).map(([key]) => key);
 
 test('docs and unrelated changes never select application suites', () => {
-  for (const path of ['README.md', 'editors/jetbrains/README.md', '.github/dependabot.yml', 'scripts/ci-scope.mjs', 'notes.txt']) {
+  for (const path of ['README.md', '.github/dependabot.yml', 'scripts/ci-scope.mjs', 'notes.txt']) {
     assert.deepEqual(active([path]), [], path);
   }
-});
-test('JetBrains code only selects JetBrains', () => {
-  assert.deepEqual(active(['editors/jetbrains/build.gradle.kts']), ['jetbrains']);
 });
 test('VS Code runtime selects only its package and integration tests', () => {
   assert.deepEqual(active(['editors/vscode/src/extension.js']), ['node', 'vscode_package', 'vscode']);
@@ -24,23 +21,23 @@ test('VS Code assets and themes only require package validation', () => {
     assert.deepEqual(active([path]), ['node', 'vscode_package']);
   }
 });
-test('frontend adapters do not trigger either IDE', () => {
+test('frontend adapters only select highlighter checks', () => {
   assert.deepEqual(active(['packages/highlight/src/prism.js']), ['node', 'highlight']);
 });
 test('shared inputs select their actual consumers', () => {
-  assert.deepEqual(active(['packages/highlight/src/language.js']), ['node', 'vscode_package', 'highlight', 'jetbrains']);
-  assert.deepEqual(active(['packages/highlight/test/fixtures/example.skel']), ['node', 'highlight', 'jetbrains']);
+  assert.deepEqual(active(['packages/highlight/src/language.js']), ['node', 'vscode_package', 'highlight']);
+  assert.deepEqual(active(['packages/highlight/test/fixtures/example.skel']), ['node', 'highlight']);
   assert.deepEqual(active(['packages/highlight/src/skel.tmLanguage.json']), ['node', 'vscode_package', 'vscode', 'highlight']);
-  assert.deepEqual(active(['editors/vscode/skelc-compatibility.json']), ['node', 'vscode_package', 'vscode', 'jetbrains']);
+  assert.deepEqual(active(['editors/vscode/skelc-compatibility.json']), ['node', 'vscode_package', 'vscode']);
 });
-test('npm dependencies and asset preparation do not trigger Gradle', () => {
+test('npm dependencies and asset preparation select both packages and VS Code integration', () => {
   for (const path of ['package-lock.json', 'package.json', '.npmrc', 'scripts/prepare-assets.js']) {
     assert.deepEqual(active([path]), ['node', 'vscode_package', 'vscode', 'highlight']);
   }
 });
 test('mixed changes union scopes, including deleted/renamed paths from git diff', () => {
-  assert.deepEqual(active(['editors/vscode/src/old.js', 'editors/jetbrains/new file.kt']),
-    ['node', 'vscode_package', 'vscode', 'jetbrains']);
+  assert.deepEqual(active(['editors/vscode/src/old.js', 'packages/highlight/test/new file.js']),
+    ['node', 'vscode_package', 'vscode', 'highlight']);
 });
 test('full verification requires an explicit opt-in', () => {
   assert.ok(Object.values(classifyChanges([], true)).every(Boolean));
@@ -57,7 +54,6 @@ test('CLI handles PR and manual NUL-separated paths', () => {
       });
       assert.equal(result.status, 0, result.stderr);
       assert.match(readFileSync(output, 'utf8'), /vscode=true/);
-      assert.match(readFileSync(output, 'utf8'), /jetbrains=false/);
       assert.match(readFileSync(output, 'utf8'), /full=false/);
     }
   } finally {
@@ -103,7 +99,6 @@ test('workflow diffs PRs and manual commits without forcing all components', () 
     for (const [event, before] of [['pull_request', base], ['workflow_dispatch', '']]) {
       const scope = run(event, before, head);
       assert.equal(scope.vscode, 'true');
-      assert.equal(scope.jetbrains, 'false');
       assert.equal(scope.full, 'false');
     }
     assert.ok(Object.values(run('workflow_dispatch', '', head, true)).every(value => value === 'true'));
@@ -116,11 +111,11 @@ test('required gate requires compatibility matrices for selected components', ()
   const workflow = readFileSync('.github/workflows/ci.yml', 'utf8');
   const shell = workflow.split('      - name: Verify CI results')[1].split('        run: |\n')[1]
     .split('\n').map(line => line.slice(10)).join('\n');
-  for (const paths of [['.github/workflows/publish.yml'], [], ['editors/jetbrains/src/Test.kt'], ['packages/highlight/src/prism.js'], ['editors/vscode/src/client.js']]) {
+  for (const paths of [['.github/workflows/publish.yml'], [], ['packages/highlight/src/prism.js'], ['editors/vscode/src/client.js']]) {
     const scope = classifyChanges(paths);
     const needs = { changes: { result: 'success', outputs: Object.fromEntries(Object.entries(scope).map(([k, v]) => [k, String(v)])) } };
     for (const [job, selected] of Object.entries({ check: scope.node, vscode: scope.vscode,
-      workflow: scope.workflow, jetbrains: scope.jetbrains, 'highlight-compatibility': scope.highlight })) {
+      workflow: scope.workflow, 'highlight-compatibility': scope.highlight })) {
       needs[job] = { result: selected ? 'success' : 'skipped' };
     }
     const run = () => spawnSync('bash', ['-eo', 'pipefail', '-c', shell], {
@@ -135,7 +130,7 @@ test('required gate requires compatibility matrices for selected components', ()
       }
       needs[job].result = saved;
     }
-    for (const key of ['workflow', 'node', 'vscode', 'jetbrains', 'highlight']) {
+    for (const key of ['workflow', 'node', 'vscode', 'highlight']) {
       const saved = needs.changes.outputs[key];
       delete needs.changes.outputs[key];
       assert.notEqual(run().status, 0, `missing ${key}`);
@@ -148,7 +143,6 @@ test('workflow changes select lint without application suites', () => {
   for (const path of ['.github/workflows/ci.yml', '.github/workflows/publish.yml', '.github/actionlint.yaml']) {
     assert.deepEqual(active([path]), ['workflow']);
   }
-  assert.deepEqual(active(['scripts/jetbrains-signing.test.mjs']), ['jetbrains']);
 });
 
 
@@ -158,9 +152,7 @@ test('selected PR components include compatibility checks before merging', () =>
   assert.match(triggers, /  pull_request:/);
   assert.doesNotMatch(triggers, /  push:/);
   for (const name of ['Check out latest tested skelc', 'Build latest tested skelc language server',
-    'Test latest skelc LSP integration', 'Test latest skelc in Extension Host',
-    'Check out latest skelc for JetBrains', 'Build latest skelc for JetBrains',
-    'Test plugin with minimum skelc', 'Test plugin with latest skelc', 'Verify supported IDEs']) {
+    'Test latest skelc LSP integration', 'Test latest skelc in Extension Host']) {
     const step = workflow.split(`      - name: ${name}\n`)[1]?.split('\n      - ')[0];
     assert.ok(step, name);
     assert.doesNotMatch(step, /^        if:/m, name);

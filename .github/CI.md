@@ -9,19 +9,17 @@ Checks run before merging, with editor components selected by changed files.
 | Push a `v*` tag | Validate source, prepare Draft, submit selected channels, then publish Release |
 | Published GitHub Release | No workflow |
 | Manual CI | Checks and matrices for the selected commit; `full=true` selects all components |
-| Manual Publish | Recover publication for an existing tag using `tag` and `artifacts: all/vscode/npm/jetbrains` |
+| Manual Publish | Recover publication for an existing tag using `tag` and `artifacts: all/vscode/npm` |
 
 ## CI selection
 
 See [the changed-file table](../CONTRIBUTING.md#ci-scope). Documentation and unrelated changes run lightweight policy tests. Workflow YAML and actionlint configuration changes also run actionlint, without starting application suites. The required gate checks this optional lint job as well. No workflow-level path filter is used: `CI / Required Checks` must always report a result.
 
-PRs test both the minimum and latest configured skelc for selected VS Code changes. Selected highlighter changes run the Node/peer matrix; selected JetBrains changes run plugin tests and Plugin Verifier. Unselected components remain skipped. Manual CI uses the same check depth; `full=true` deliberately selects all components.
+PRs test both the minimum and latest configured skelc for selected VS Code changes. Selected highlighter changes run the Node/peer matrix. Manual CI uses the same check depth; `full=true` deliberately selects all components.
 
 Superseded PR runs are cancelled. The main rulesets require up-to-date PRs, successful `CI / Required Checks`, and squash merging. No duplicate main CI is needed. The required gate rejects failures, cancellations, missing selection outputs and unexpected skips.
 
-Jobs have explicit time limits: classification/gate 5 minutes, workflow lint 10, package/highlighter checks 15, VS Code integration 30, and JetBrains 60. Individual LSP tests are limited to 5 minutes, Extension Host tests to 10, Gradle tests to 15 and Plugin Verifier to 40. Publishing jobs have limits of 20 minutes for npm/VS Code and 60 for JetBrains, with a 10-minute upload/signing step.
-
-JetBrains CI runs `node --test scripts/jetbrains-signing.test.mjs` against the real Gradle configuration for unset, empty, complete and each partial signing configuration. It uses fake values and `gradlew help`, so it never signs or uploads an artifact.
+Classification and the required gate have a 5-minute limit. Workflow lint has a 10-minute limit, package and highlighter checks have a 15-minute limit, and VS Code integration has a 30-minute limit. Individual LSP and Extension Host tests have 5- and 10-minute limits, respectively. Each publishing job has a 20-minute limit.
 
 ## Publishing
 
@@ -29,22 +27,13 @@ JetBrains CI runs `node --test scripts/jetbrains-signing.test.mjs` against the r
 2. Sync main and push a `vX.Y.Z` tag (excluding `v0.0.0`) at that commit; do not publish GitHub Release manually.
 3. Publish validates tag checkout, ancestry on main, dated nonempty VS Code changelog and released minimum skelc version. It does not query CI history; merge checks are enforced before main is updated.
 4. Prepare a Draft Release using the changelog notes. Store `publication.json` with the tag, commit SHA and required channels. Each successful submission uploads its own `publication-<channel>.json` receipt. These small JSON assets stay with the Release for durable cross-run recovery.
-5. VS Code, npm and the enabled JetBrains channel run independently after validation, checking out the validated SHA. Package versions are injected only into temporary checkouts. Package checks and JetBrains release-artifact verification remain; server integration suites are not repeated during publication.
+5. VS Code and npm run independently after validation and check out the validated SHA. Each job sets the release version in its temporary checkout and runs its package checks.
+6. The final job requires every selected job to succeed and verifies all required receipts, including channels skipped during this run, before publishing GitHub Release.
 
-6. The final job requires all selected jobs to succeed and checks every required receipt, including channels skipped during this run. Only then publish GitHub Release. A JetBrains receipt confirms successful submission, not review approval or public availability.
-
-Before checkout or SDK downloads, the JetBrains job checks that the token is non-empty and signing credentials are paired, without printing secret values. This preflight cannot establish token validity or permissions.
-
-Author signing is optional: the Marketplace token alone is sufficient. Configure both certificate and private key to sign; configuring only one is rejected.
-
-JetBrains publication remains opt-in through `JETBRAINS_MARKETPLACE_ENABLED=true` and its environment secrets. Selecting JetBrains explicitly while disabled fails validation. Selecting `all` includes JetBrains only when enabled.
-
-For recovery, rerun failed jobs or manually dispatch Publish for the same tag with
-`all` or the failed channel. Matching receipts skip already submitted channels,
-so `all` can resume an incomplete release without duplicate uploads. The final
-check always requires every channel recorded in the manifest, not just the
-current selection. Changed source SHA or changed JetBrains enablement fails
-validation; restore the original configuration instead of bypassing the requirement.
+To resume publication, rerun failed jobs or dispatch Publish for the same tag with
+`all` or the failed channel. Publish uses matching receipts to resume pending
+uploads. Recovery requires the source SHA and channel list recorded in the
+draft manifest.
 
 If a remote upload succeeded but the receipt upload failed, automatic recovery
 cannot infer success safely. Check the exact version and artifact/source against

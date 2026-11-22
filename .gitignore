@@ -19,9 +19,3 @@ packages/highlight/LICENSE
 # Logs
 npm-debug.log*
 *.log
-
-# JetBrains plugin build state
-.gradle/
-.kotlin/
-.intellijPlatform/
-editors/jetbrains/build/

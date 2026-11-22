@@ -6,7 +6,6 @@
 - Keep the extension as a thin Language Server Protocol client. Parsing, semantic analysis, formatting, and language intelligence belong to `skelc lsp` in the independent `yorun-ai/skel` repository.
 - `packages/highlight` owns the canonical TextMate grammar and frontend highlighter adapters. `editors/vscode` owns VS Code language configuration, themes, extension settings, client startup, and Marketplace packaging.
 - Do not copy Skel parser or analyzer logic into JavaScript. New semantic editor features should first be implemented by the skelc language server and then enabled by this client.
-- `editors/jetbrains` owns the Kotlin IntelliJ Platform plugin, editor behavior, LSP integration, Gradle tests and Marketplace packaging. Read its local guidelines before modifying it.
 
 ## Compatibility
 
@@ -36,7 +35,7 @@
 - Merge release preparation after required PR checks pass, sync main, then push the reviewed `vX.Y.Z` tag (excluding `v0.0.0`). Tag pushes start Publish; do not publish GitHub Release first.
 - Validate tag identity, main ancestry, dated nonempty VS Code CHANGELOG and the released minimum skelc version. Keep source versions at `0.0.0`; inject versions only in Actions checkouts.
 - Prepare a Draft Release with changelog notes and a `publication.json` manifest binding tag, commit and required channels. Keep one `publication-<channel>.json` receipt after each successful upload. Receipts are durable Release assets, never source files, and must not be overwritten or fabricated.
-- Only publish GitHub Release after all required channel receipts match the source and the current selected jobs succeeded. JetBrains remains opt-in; its receipt records upload/submission, not Marketplace review approval or public availability.
-- Preserve per-channel environments and credentials. Check environment deployment rules permit version tags. Changing the JetBrains enablement flag during recovery must fail rather than silently drop a required channel.
-- Retry failed jobs or dispatch for the same tag with `all`, `vscode`, `npm`, or `jetbrains`; matching successful receipts skip duplicate uploads. If remote upload succeeded but recording failed, verify the exact remote version and source before repairing the missing receipt; never blindly republish or overwrite a version.
+- Only publish GitHub Release after all required channel receipts match the source and the current selected jobs succeeded.
+- Preserve per-channel environments and credentials. Check environment deployment rules permit version tags.
+- Retry failed jobs or dispatch for the same tag with `all`, `vscode`, or `npm`; matching successful receipts skip duplicate uploads. If remote upload succeeded but recording failed, verify the exact remote version and source before repairing the missing receipt; never blindly republish or overwrite a version.
 - Existing published Releases without a manifest retain legacy selective recovery and are not edited. See `.github/CI.md` for recovery boundaries and checks.

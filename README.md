@@ -11,7 +11,6 @@ Editor integrations and syntax highlighting for the [Skel](https://github.com/yo
 | --- | --- |
 | [`@yorun-ai/skel-highlight`](packages/highlight) | Shared TextMate grammar and frontend highlighter integrations |
 | [`skeleton`](editors/vscode) | VS Code extension and `skelc lsp` client |
-| [Skel Language Support](editors/jetbrains) | JetBrains 2025.2.1+ plugin and `skelc lsp` client |
 
 ## Syntax Highlighting
 
@@ -30,10 +29,6 @@ See the [package README](packages/highlight) for installation and registration e
 
 The [Skeleton VS Code extension](editors/vscode) provides syntax highlighting, a color theme, recoverable syntax and source-directory-scoped semantic diagnostics, schema compatibility diagnostics and reports, quick fixes, formatting, context-aware decorator completion, hover details, hierarchical symbols, definitions, references, and top-level declaration rename through `skelc lsp`. Its Marketplace identity is `yorun.skeleton`.
 
-## JetBrains
-
-The [JetBrains plugin](editors/jetbrains) provides basic Skel editing and integrates with `skelc lsp` for language intelligence on IDEs with the LSP module. It is a separate Gradle/Kotlin project requiring JDK 21. See its README for installation, tests, supported capabilities and Marketplace publishing.
-
 ## Development
 
 Node.js 22 or later is required for repository development:
@@ -51,7 +46,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for repository boundaries, validation com
 
 Source manifests use `0.0.0` as a development placeholder. Pushing a reviewed `v<version>` tag starts publication and applies that version to every workspace package in the temporary Actions checkout before validation and packaging.
 
-GitHub Release is published after all required channels report successful submission. JetBrains Marketplace review may complete later.
+GitHub Release is published after VS Code Marketplace and npm report successful submission.
 
 See [CI and release lifecycle](.github/CI.md) for required PR checks, tag behavior and single-channel release recovery.
 

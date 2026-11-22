@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const channels = ['vscode', 'npm', 'jetbrains'];
+const channels = ['vscode', 'npm'];
 const execute = (command, args) => execFileSync(command, args, { encoding: 'utf8' }).trim();
 
 export function checkReceipt(receipt, expected) {
@@ -25,7 +25,6 @@ export function publication(env = process.env, run = execute) {
   const matching = releases.filter(release => release.tag_name === tag);
   if (matching.length > 1) throw new Error('Duplicate release');
   let release = matching[0];
-  const required = ['vscode', 'npm', ...(env.JETBRAINS_ENABLED === 'true' ? ['jetbrains'] : [])];
   const legacy = release?.draft === false && !release.assets.some(asset => asset.name === 'publication.json');
   const directory = mkdtempSync(join(tmpdir(), 'skel-publication-'));
   const upload = (name, value) => {
@@ -52,15 +51,15 @@ export function publication(env = process.env, run = execute) {
         const manifestName = 'publication.json';
         if (release.assets.some(asset => asset.name === manifestName)) {
           const manifest = download(manifestName);
-          if (manifest.tag !== tag || manifest.commit !== commit || JSON.stringify(manifest.required) !== JSON.stringify(required)) {
-            throw new Error('Release source or required channels changed; restore the original configuration');
+          if (manifest.tag !== tag || manifest.commit !== commit || JSON.stringify(manifest.required) !== JSON.stringify(channels)) {
+            throw new Error('Release source or required channels changed; use the original release workflow');
           }
         } else {
           if (!release.draft || release.assets.length !== 0) throw new Error('Release has no publication manifest; verify legacy publication manually');
-          upload(manifestName, { tag, commit, required });
+          upload(manifestName, { tag, commit, required: channels });
         }
         const completed = [];
-        for (const channel of required) {
+        for (const channel of channels) {
           if (release.assets.some(asset => asset.name === `publication-${channel}.json`)) {
             checkReceipt(download(`publication-${channel}.json`), { tag, commit, channel });
             completed.push(channel);
@@ -82,14 +81,14 @@ export function publication(env = process.env, run = execute) {
       },
       complete(needs) {
         if (needs.validate?.result !== 'success') throw new Error('Release validation failed');
-        for (const [channel, job] of [['vscode', 'marketplace'], ['npm', 'npm'], ['jetbrains', 'jetbrains']]) {
+        for (const [channel, job] of [['vscode', 'marketplace'], ['npm', 'npm']]) {
           const expected = needs.validate.outputs[channel] === 'true' ? 'success' : 'skipped';
           if (needs[job]?.result !== expected) throw new Error(`Publication job ${job} did not complete`);
         }
         if (legacy) return;
         const manifest = download('publication.json');
-        if (manifest.tag !== tag || manifest.commit !== commit || JSON.stringify(manifest.required) !== JSON.stringify(required)) throw new Error('Publication manifest mismatch');
-        for (const channel of required) checkReceipt(download(`publication-${channel}.json`), { tag, commit, channel });
+        if (manifest.tag !== tag || manifest.commit !== commit || JSON.stringify(manifest.required) !== JSON.stringify(channels)) throw new Error('Publication manifest mismatch');
+        for (const channel of channels) checkReceipt(download(`publication-${channel}.json`), { tag, commit, channel });
         if (release.draft) gh(['release', 'edit', tag, '--verify-tag', '--draft=false']);
       },
       dispose() { rmSync(directory, { recursive: true, force: true }); },
