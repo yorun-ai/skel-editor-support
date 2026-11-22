@@ -1,0 +1,19 @@
+domain demo.auth
+
+pub actor UserActor {
+    auth {
+        impersonator UserActor,
+        OpsActor
+        credential { session: string }
+        info {
+            impersonator: string
+        }
+    }
+}
+
+pub actor OpsActor {
+    auth {
+        credential { token: string }
+        info { id: string }
+    }
+}

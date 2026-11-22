@@ -29,6 +29,8 @@ test("Shiki highlights representative Skel source", async () => {
       const highlighted = highlighter.codeToHtml(declaration, { lang: "skel", theme: "github-dark" });
       assert.match(highlighted, /<span[^>]*>ext<\/span>/);
     }
+    const impersonators = highlighter.codeToHtml("impersonator OpsActor, AdminActor", { lang: "skel", theme: "github-dark" });
+    assert.match(impersonators, /<span[^>]*>impersonator<\/span>/);
   } finally {
     highlighter.dispose();
   }
