@@ -4,6 +4,27 @@ All notable changes to the Skel VS Code extension are documented in this file.
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-11-22
+
+### Compatibility
+
+- Require skelc v0.30.0 or newer for the VS Code language server. CI tests skelc v0.30.0 and v0.35.0.
+- Use the installed compiler’s default diagnostics and remove the `skelc.strict` setting.
+
+### Added
+
+- Highlight `impersonator` clauses in actor authentication blocks across VS Code and the shared highlighter, including actor lists that span lines. Completion, diagnostics, formatting, and navigation for these clauses require skelc v0.35.0 or newer.
+
+### Changed
+
+- Remove legacy `noauth` keyword highlighting.
+- Publish the VS Code extension and npm highlighter. Retire the JetBrains plugin and its build and publishing workflow.
+
+### Maintenance
+
+- Run VS Code integration checks when shared Skel fixtures change.
+- Build the extension before running Extension Host tests. Local runs use an installed copy of VS Code, and CI uses VS Code 1.91.0 on Xvfb.
+
 ## [0.19.0] - 2026-10-21
 
 ### Added
@@ -204,7 +225,8 @@ Initial public release.
 - Language-server trace, output, restart, and startup troubleshooting support
 - Local, remote workspace, and untitled-document selectors
 
-[Unreleased]: https://github.com/yorun-ai/skel-editor-support/compare/v0.19.0...HEAD
+[Unreleased]: https://github.com/yorun-ai/skel-editor-support/compare/v0.20.0...HEAD
+[0.20.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/yorun-ai/skel-editor-support/compare/v0.16.0...v0.17.0
